@@ -1,6 +1,6 @@
 from typing import Optional
 
-from nba_api.stats.static import players
+from nba_api.stats.static import players, teams
 from nba_api.stats.endpoints import PlayerCareerStats
 from nba_api.stats.endpoints.commonplayerinfo import CommonPlayerInfo
 
@@ -50,7 +50,7 @@ def getPlayerStatsByName(player_name: str) -> str:
     all_matches = players.find_players_by_full_name(player_name)
 
     if len(all_matches) < 1:
-        return "No matches found"
+        return f"No matches found for \"{player_name}\""
 
     elif len(all_matches) > 1:
         ret_str = "The following players matched the search:"
@@ -73,3 +73,32 @@ def getPlayerHeadshotURLByName(player_name: str) -> Optional[str]:
         return None
     else:
         return getPlayerHeadshotURL(all_matches[0].get('id'))
+
+
+def getTeamStatsString(team_id: int) -> Optional[str]:
+    static_info = teams.find_team_name_by_id(team_id)
+
+    if static_info is None:
+        return None
+
+    ret_str = f"**{static_info.get('full_name')} ({static_info.get('year_founded')})**"
+
+    return ret_str
+
+def getTeamStatsByName(team_name: str) -> Optional[str]:
+    all_matches = teams.find_teams_by_full_name(team_name)
+
+    if len(all_matches) < 1:
+        return f"No matches found for \"{team_name}\""
+
+    elif len(all_matches) > 1:
+        ret_str = "The following teams matched the search:"
+        for team in all_matches:
+            ret_str += "\n" + team.get('full_name')
+
+        ret_str += "\n\nPlease try again with one of the above names"
+
+        return ret_str
+
+    else:
+        return getTeamStatsString(all_matches[0].get('id'))
