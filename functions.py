@@ -1,7 +1,7 @@
 from typing import Optional
 
 from nba_api.stats.static import players, teams
-from nba_api.stats.endpoints import PlayerCareerStats
+from nba_api.stats.endpoints import PlayerCareerStats, TeamInfoCommon
 from nba_api.stats.endpoints.commonplayerinfo import CommonPlayerInfo
 
 def getPlayerStatsString(player_id: int) -> Optional[str]:
@@ -82,6 +82,13 @@ def getTeamStatsString(team_id: int) -> Optional[str]:
         return None
 
     ret_str = f"**{static_info.get('full_name')} ({static_info.get('year_founded')})**"
+
+    common_info = TeamInfoCommon(team_id = team_id).get_normalized_dict().get('TeamInfoCommon')[0]
+
+    ret_str += f"\n\t{common_info.get('TEAM_CONFERENCE')} Conference Rank: {common_info.get('CONF_RANK')}"
+    ret_str += f"\n\t{common_info.get('TEAM_DIVISION')} Division Rank: {common_info.get('DIV_RANK')}"
+    ret_str += f"\n\tWins: {common_info.get('W')}, Losses: {common_info.get('L')}"
+    ret_str += f"\n\tPCT: {common_info.get('PCT')}"
 
     return ret_str
 
