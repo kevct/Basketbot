@@ -21,12 +21,17 @@ async def playercareerstats(ctx, *args):
     
     embed = discord.Embed(title="test", description="test", color = 0x595959)
     players = nba.getPlayerIdsByName(name.strip())
-    if not players == None:
-        if len(players) > 1:
+    if not players == None: #If the list of players is not empty
+        if len(players) > 1:#If there are multiple players with the same name then list out all the players
             embed = discord.Embed(title="Multiple Players", description="There are multiple players with the name \"" + name.strip() + "\":", color = 0x595959)
-            for i in players:
-                embed.add_field(name="\u200b", value=i[1], inline=True)
-        else:
+            if len(players) > 12: #If there are more than 12 players with the name specified
+                for i in range (0, 12):
+                    embed.add_field(name="\u200b", value=players[i][1], inline=True)
+                embed.add_field(name="\u200b", value="... and more", inline=True)
+            else:
+                for i in players:
+                    embed.add_field(name="\u200b", value=i[1], inline=True)
+        else: #List the player's stats
             stats = nba.getPlayerCareerStatsByID(players[0][0])
             height = stats["HEIGHT"].split("-")
             embed = discord.Embed(title=players[0][1], description= stats["TEAM_CITY"] + " " + stats["TEAM_NAME"] + " | #" + stats["JERSEY"] + " | "  
