@@ -1,13 +1,10 @@
-from typing import Optional, Union, List, Dict, Any
+from typing import Optional, List, Dict, Any
 
 from nba_api.stats.static import players, teams
 from nba_api.stats.endpoints import PlayerCareerStats, TeamInfoCommon
 from nba_api.stats.endpoints.commonplayerinfo import CommonPlayerInfo
 from nba_api.stats.endpoints.teamyearbyyearstats import TeamYearByYearStats
 from nba_api.stats.library.parameters import Season
-
-#This is a constant that I don't really expect to change
-DEFAULT_DISPLAY_LENGTH = 10
 
 def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_season) -> Optional[dict]:
     static_info = players.find_player_by_id(player_id)
@@ -136,7 +133,7 @@ def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
 
     return f"https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/{str(player_id)}.png"
 
-def getTeamCareerStatsByID(team_id: int) -> Optional[str]:
+def getTeamCareerStatsByID(team_id: int) -> Optional[Dict[str, Any]]:
     static_info = teams.find_team_name_by_id(team_id)
 
     if static_info is None or len(static_info) < 1:
