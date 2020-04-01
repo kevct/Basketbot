@@ -145,13 +145,13 @@ def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season)
 
     season_info = TeamInfoCommon(team_id = team_id, season_nullable=season_id).get_normalized_dict().get('TeamInfoCommon')[0]
 
-    stats_dict['TEAM_CONFERENCE'] = common_info.get('TEAM_CONFERENCE')
-    stats_dict['CONF_RANK'] = common_info.get('CONF_RANK')
-    stats_dict['TEAM_DIVISION'] = common_info.get('TEAM_DIVISION')
-    stats_dict['DIV_RANK'] = common_info.get('DIV_RANK')
-    stats_dict['W'] = common_info.get('W')
-    stats_dict['L'] = common_info.get('L')
-    stats_dict['PCT'] = common_info.get('PCT')
+    stats_dict['TEAM_CONFERENCE'] = season_info.get('TEAM_CONFERENCE')
+    stats_dict['CONF_RANK'] = season_info.get('CONF_RANK')
+    stats_dict['TEAM_DIVISION'] = season_info.get('TEAM_DIVISION')
+    stats_dict['DIV_RANK'] = season_info.get('DIV_RANK')
+    stats_dict['W'] = season_info.get('W')
+    stats_dict['L'] = season_info.get('L')
+    stats_dict['PCT'] = season_info.get('PCT')
 
     return stats_dict
 
