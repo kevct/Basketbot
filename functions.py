@@ -149,7 +149,6 @@ def getTeamCareerStatsByID(team_id: int) -> Optional[str]:
     stats_dict['L'] = 0
     stats_dict['PCT'] = 0
     stats_dict['MAX_CONF_RANK'] = all_seasons[0].get('CONF_RANK')
-    print(f"initial max rank set to {stats_dict['MAX_CONF_RANK']}")
     stats_dict['MIN_CONF_RANK'] = all_seasons[0].get('CONF_RANK')
     stats_dict['MAX_DIV_RANK'] = all_seasons[0].get('DIV_RANK')
     stats_dict['MIN_DIV_RANK'] = all_seasons[0].get('DIV_RANK')
@@ -159,7 +158,6 @@ def getTeamCareerStatsByID(team_id: int) -> Optional[str]:
         stats_dict['L'] += season.get('LOSSES')
 
         if stats_dict['MAX_CONF_RANK'] > season.get('CONF_RANK') or stats_dict['MAX_CONF_RANK'] < 1:
-            print(f"replaced max rank {stats_dict['MAX_CONF_RANK']} with {season.get('CONF_RANK')}")
             stats_dict['MAX_CONF_RANK'] = season.get('CONF_RANK')
 
         elif stats_dict['MIN_CONF_RANK'] < season.get('CONF_RANK'):
