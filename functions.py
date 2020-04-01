@@ -1,9 +1,10 @@
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Dict, Any
 
 from nba_api.stats.static import players, teams
 from nba_api.stats.endpoints import PlayerCareerStats, TeamInfoCommon, LeagueStandings
 from nba_api.stats.endpoints.commonplayerinfo import CommonPlayerInfo
-from nba_api.stats.library.parameters import Season, LeagueID, SeasonType
+from nba_api.stats.endpoints.teamyearbyyearstats import TeamYearByYearStats
+from nba_api.stats.library.parameters import Season, LeagueID, SeasonType, SeasonAll
 
 #This is a constant that I don't really expect to change
 DEFAULT_DISPLAY_LENGTH = 10
@@ -135,7 +136,46 @@ def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
 
     return f"https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/{str(player_id)}.png"
 
-def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season) -> Optional[str]:
+def getTeamCareerStatsByID(team_id: int) -> Optional[str]:
+    static_info = teams.find_team_name_by_id(team_id)
+
+    if static_info is None or len(static_info) < 1:
+        return None
+
+    stats_dict = {}
+
+    all_seasons = TeamYearByYearStats(team_id = team_id).get_normalized_dict().get('TeamStats')
+    stats_dict['W'] = 0
+    stats_dict['L'] = 0
+    stats_dict['PCT'] = 0
+    stats_dict['MAX_CONF_RANK'] = all_seasons[0].get('CONF_RANK')
+    print(f"initial max rank set to {stats_dict['MAX_CONF_RANK']}")
+    stats_dict['MIN_CONF_RANK'] = all_seasons[0].get('CONF_RANK')
+    stats_dict['MAX_DIV_RANK'] = all_seasons[0].get('DIV_RANK')
+    stats_dict['MIN_DIV_RANK'] = all_seasons[0].get('DIV_RANK')
+    # Add up all the stats for all seasons
+    for season in all_seasons:
+        stats_dict['W'] += season.get('WINS')
+        stats_dict['L'] += season.get('LOSSES')
+
+        if stats_dict['MAX_CONF_RANK'] > season.get('CONF_RANK') or stats_dict['MAX_CONF_RANK'] < 1:
+            print(f"replaced max rank {stats_dict['MAX_CONF_RANK']} with {season.get('CONF_RANK')}")
+            stats_dict['MAX_CONF_RANK'] = season.get('CONF_RANK')
+
+        elif stats_dict['MIN_CONF_RANK'] < season.get('CONF_RANK'):
+            stats_dict['MIN_CONF_RANK'] = season.get('CONF_RANK')
+
+        if stats_dict['MAX_DIV_RANK'] > season.get('DIV_RANK'):
+            stats_dict['MAX_DIV_RANK'] = season.get('DIV_RANK')
+
+        elif stats_dict['MIN_DIV_RANK'] < season.get('DIV_RANK'):
+            stats_dict['MIN_DIV_RANK'] = season.get('DIV_RANK')
+
+    stats_dict['PCT'] = (stats_dict['W'] + stats_dict['L']) / float(stats_dict['W'])
+
+    return stats_dict
+
+def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season) -> Optional[Dict[str, Any]]:
     static_info = teams.find_team_name_by_id(team_id)
 
     if static_info is None or len(static_info) < 1:
@@ -167,7 +207,7 @@ def getTeamIdsByName(team_name: str) -> Optional[List[List]]:
     if len(all_matches) < 1:
         return None
 
-    elif len(all_matches) > 1:
+    else:
         for match in all_matches:
             ret_list.append([match.get('id'), match.get('full_name')])
 
