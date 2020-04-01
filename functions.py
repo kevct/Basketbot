@@ -125,6 +125,25 @@ def getPlayerIdsByName(player_name: str) -> Optional[List[List]]:
 
     return ret_list
 
+def getActivePlayerIdsByName(player_name: str) -> Optional[List[List]]:
+    """
+    Takes a string and returns all the active names and IDs matching the string
+    :param player_name: name of the player to search for
+    :return: returns None if no matches found, returns an array of matching ids and their names otherwise
+    """
+
+    all_matches = players.find_players_by_full_name(player_name)
+    ret_list = []
+
+    for match in all_matches:
+        if match.get('is_active'):
+            ret_list.append([match.get('id'), match.get('full_name')])
+
+    if len(ret_list) < 1:
+        return None
+    else:
+        return ret_list
+
 def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
     static_info = players.find_player_by_id(player_id)
 
