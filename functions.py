@@ -21,9 +21,11 @@ def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_sea
     for season in all_seasons:
         if season.get('SEASON_ID') == season_id:
             target_season = season
+            break
 
     if target_season is None:
         return None
+
     else:
         stats_dict = {}
 
