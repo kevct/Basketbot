@@ -8,6 +8,35 @@ from nba_api.stats.library.parameters import Season, LeagueID, SeasonType
 #This is a constant that I don't really expect to change
 DEFAULT_DISPLAY_LENGTH = 10
 
+def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_season) -> Optional[dict]:
+    static_info = players.find_player_by_id(player_id)
+
+    if static_info is None or len(static_info) < 1:
+        return None
+
+    all_seasons = PlayerCareerStats(player_id=static_info.get('id')).get_normalized_dict().get('SeasonTotalsRegularSeason')
+
+    target_season = None
+
+    for season in all_seasons:
+        if season.get('SEASON_ID') == season_id:
+            target_season = season
+
+    if target_season is None:
+        return None
+    else:
+        stats_dict = {}
+
+        stats_dict['PTS'] = target_season.get('PTS')
+        stats_dict['AST'] = target_season.get('AST')
+        stats_dict['BLK'] = target_season.get('BLK')
+        stats_dict['STL'] = target_season.get('STL')
+        stats_dict['REB'] = target_season.get('REB')
+        stats_dict['OREB'] = target_season.get('OREB')
+        stats_dict['DREB'] = target_season.get('DREB')
+
+        return stats_dict
+
 def getPlayerCareerStatsByID(player_id: int) -> Optional[dict]:
     static_info = players.find_player_by_id(player_id)
 
