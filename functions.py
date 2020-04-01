@@ -78,7 +78,7 @@ def getPlayerCareerString(player_id: int) -> Optional[str]:
 
     return ret_str
 
-def getPlayerStatsByName(player_name: str) -> str:
+def getPlayerCareerStatsStringByName(player_name: str) -> str:
     all_matches = players.find_players_by_full_name(player_name)
 
     if len(all_matches) < 1:
@@ -94,7 +94,7 @@ def getPlayerStatsByName(player_name: str) -> str:
         return ret_str
 
     else:
-        return getPlayerStatsString(all_matches[0].get('id'))
+        return getPlayerCareerString(all_matches[0].get('id'))
 
 def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
     return f"https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/{str(player_id)}.png"
