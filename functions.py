@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 from nba_api.stats.static import players, teams
 from nba_api.stats.endpoints import PlayerCareerStats, TeamInfoCommon, LeagueStandings
@@ -78,36 +78,28 @@ def getPlayerCareerString(player_id: int) -> Optional[str]:
 
     return ret_str
 
-def getPlayerCareerStatsStringByName(player_name: str) -> str:
+def getPlayerIdsByName(player_name: str) -> Optional[List[List]]:
+    """
+    Takes a string and returns all the names and IDs matching the string
+    :param player_name: name of the player to search for
+    :return: returns None if no matches found, returns an array of matching ids and their names otherwise
+    """
+
     all_matches = players.find_players_by_full_name(player_name)
+    ret_list = []
 
     if len(all_matches) < 1:
-        return f"No matches found for \"{player_name}\""
-
-    elif len(all_matches) > 1:
-        ret_str = "The following players matched the search:"
-        for player in all_matches:
-            ret_str += "\n" + player.get('full_name')
-
-        ret_str += "\n\nPlease try again with one of the above names"
-
-        return ret_str
-
+        return None
     else:
-        return getPlayerCareerString(all_matches[0].get('id'))
+        for match in all_matches:
+            ret_list.append([match.get('id'), match.get('full_name')])
+
+    return ret_list
 
 def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
     return f"https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/{str(player_id)}.png"
 
-def getPlayerHeadshotURLByName(player_name: str) -> Optional[str]:
-    all_matches = players.find_players_by_full_name(player_name)
-    if not len(all_matches) == 1:
-        return None
-    else:
-        return getPlayerHeadshotURL(all_matches[0].get('id'))
-
-
-def getTeamStatsString(team_id: int) -> Optional[str]:
+def getTeamCareerStatsString(team_id: int) -> Optional[str]:
     static_info = teams.find_team_name_by_id(team_id)
 
     if static_info is None:
@@ -124,20 +116,20 @@ def getTeamStatsString(team_id: int) -> Optional[str]:
 
     return ret_str
 
-def getTeamStatsByName(team_name: str) -> Optional[str]:
+def getTeamIdsByName(team_name: str) -> Optional[List[List]]:
+    """
+    Takes a string name and returns a list of all the teams and ids that match that string
+    :param team_name:
+    :return:
+    """
     all_matches = teams.find_teams_by_full_name(team_name)
+    ret_list = []
 
     if len(all_matches) < 1:
-        return f"No matches found for \"{team_name}\""
+        return None
 
     elif len(all_matches) > 1:
-        ret_str = "The following teams matched the search:"
-        for team in all_matches:
-            ret_str += "\n" + team.get('full_name')
+        for match in all_matches:
+            ret_list.append([match.get('id'), match.get('full_name')])
 
-        ret_str += "\n\nPlease try again with one of the above names"
-
-        return ret_str
-
-    else:
-        return getTeamStatsString(all_matches[0].get('id'))
+    return ret_list
