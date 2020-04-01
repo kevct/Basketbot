@@ -11,7 +11,7 @@ DEFAULT_DISPLAY_LENGTH = 10
 def getPlayerCareerStatsByID(player_id: int) -> Optional[dict]:
     static_info = players.find_player_by_id(player_id)
 
-    if static_info is None:
+    if static_info is None or len(static_info) < 1:
         return None
 
     stats_dict = {}
@@ -43,7 +43,7 @@ def getPlayerCareerString(player_id: int) -> Optional[str]:
     static_info = players.find_player_by_id(player_id)
 
     #If that id doesn't return a player, return None
-    if static_info is None:
+    if static_info is None or len(static_info) < 1:
         return None
 
     ret_str = f"**Player {str(static_info.get('id'))}: {static_info.get('full_name')}**"
@@ -97,12 +97,37 @@ def getPlayerIdsByName(player_name: str) -> Optional[List[List]]:
     return ret_list
 
 def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
+    static_info = players.find_player_by_id(player_id)
+
+    if static_info is None or len(static_info) < 1:
+        return None
+
     return f"https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/{str(player_id)}.png"
+
+def getTeamCareerStatsByID(team_id: int) -> Optional[str]:
+    static_info = teams.find_team_name_by_id(team_id)
+
+    if static_info is None or len(static_info) < 1:
+        return None
+
+    stats_dict = {}
+
+    common_info = TeamInfoCommon(team_id = team_id).get_normalized_dict().get('TeamInfoCommon')[0]
+
+    stats_dict['TEAM_CONFERENCE'] = common_info.get('TEAM_CONFERENCE')
+    stats_dict['CONF_RANK'] = common_info.get('CONF_RANK')
+    stats_dict['TEAM_DIVISION'] = common_info.get('TEAM_DIVISION')
+    stats_dict['DIV_RANK'] = common_info.get('DIV_RANK')
+    stats_dict['W'] = common_info.get('W')
+    stats_dict['L'] = common_info.get('L')
+    stats_dict['PCT'] = common_info.get('PCT')
+
+    return stats_dict
 
 def getTeamCareerStatsString(team_id: int) -> Optional[str]:
     static_info = teams.find_team_name_by_id(team_id)
 
-    if static_info is None:
+    if static_info is None or len(static_info) < 1:
         return None
 
     ret_str = f"**{static_info.get('full_name')} ({static_info.get('year_founded')})**"
