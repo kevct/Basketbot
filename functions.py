@@ -1,10 +1,45 @@
-from typing import Optional
+from typing import Optional, Union
 
 from nba_api.stats.static import players, teams
-from nba_api.stats.endpoints import PlayerCareerStats, TeamInfoCommon
+from nba_api.stats.endpoints import PlayerCareerStats, TeamInfoCommon, LeagueStandings
 from nba_api.stats.endpoints.commonplayerinfo import CommonPlayerInfo
+from nba_api.stats.library.parameters import Season, LeagueID, SeasonType
 
-def getPlayerStatsString(player_id: int) -> Optional[str]:
+#This is a constant that I don't really expect to change
+DEFAULT_DISPLAY_LENGTH = 10
+
+def getPlayerCareerStatsByID(player_id: int) -> Optional[dict]:
+    static_info = players.find_player_by_id(player_id)
+
+    if static_info is None:
+        return None
+
+    stats_dict = {}
+
+    common_info = CommonPlayerInfo(player_id=static_info.get('id')).get_normalized_dict() \
+        .get('CommonPlayerInfo')[0]
+    career_stats = PlayerCareerStats(player_id=static_info.get('id')).get_normalized_dict() \
+        .get('CareerTotalsRegularSeason')[0]
+
+    stats_dict['FROM_YEAR'] = common_info.get('FROM_YEAR')
+    stats_dict['TO_YEAR'] = common_info.get('TO_YEAR')
+    stats_dict['TEAM_CITY'] = common_info.get('TEAM_CITY')
+    stats_dict['TEAM_NAME'] = common_info.get('TEAM_NAME')
+    stats_dict['JERSEY'] = common_info.get('JERSEY')
+    stats_dict['POSITION'] = common_info.get('POSITION')
+    stats_dict['HEIGHT'] = common_info.get('HEIGHT')
+    stats_dict['WEIGHT'] = common_info.get('WEIGHT')
+    stats_dict['PTS'] = career_stats.get('PTS')
+    stats_dict['AST'] = career_stats.get('AST')
+    stats_dict['BLK'] = career_stats.get('BLK')
+    stats_dict['STL'] = career_stats.get('STL')
+    stats_dict['REB'] = career_stats.get('REB')
+    stats_dict['OREB'] = career_stats.get('OREB')
+    stats_dict['DREB'] = career_stats.get('DREB')
+
+    return stats_dict
+
+def getPlayerCareerString(player_id: int) -> Optional[str]:
     static_info = players.find_player_by_id(player_id)
 
     #If that id doesn't return a player, return None
@@ -21,28 +56,25 @@ def getPlayerStatsString(player_id: int) -> Optional[str]:
 
     # get the rest of the data from the NBA api endpoint
     # might want to change this to DataFrame if we need it for graphing later
-    common_info = CommonPlayerInfo(player_id=static_info.get('id')).get_normalized_dict() \
-        .get('CommonPlayerInfo')[0]
-    career_stats = PlayerCareerStats(player_id=static_info.get('id')).get_normalized_dict() \
-        .get('CareerTotalsRegularSeason')[0]
+    all_info = getPlayerCareerStatsByID(player_id)
 
-    ret_str += f" ({common_info.get('FROM_YEAR')}-{common_info.get('TO_YEAR')})"
+    ret_str += f" ({all_info.get('FROM_YEAR')}-{all_info.get('TO_YEAR')})"
 
-    ret_str += f"\n\t{common_info.get('TEAM_CITY')} {common_info.get('TEAM_NAME')} #{common_info.get('JERSEY')}: {common_info.get('POSITION')}"
+    ret_str += f"\n\t{all_info.get('TEAM_CITY')} {all_info.get('TEAM_NAME')} #{all_info.get('JERSEY')}: {all_info.get('POSITION')}"
 
     #split the height into separate feet and inches for formatting
-    height = common_info.get('HEIGHT').split('-')
-    ret_str += f"\n\tHeight: {height[0]}\'{height[1]}\", Weight: {common_info.get('WEIGHT')} lbs"
+    height = all_info.get('HEIGHT').split('-')
+    ret_str += f"\n\tHeight: {height[0]}\'{height[1]}\", Weight: {all_info.get('WEIGHT')} lbs"
 
     #career stats
     ret_str += "\n\n\t*Career Stats (Regular Season):*"
-    ret_str += f"\n\tPoints: {career_stats.get('PTS')}"
-    ret_str += f"\n\tAssists: {career_stats.get('AST')}"
-    ret_str += f"\n\tBlocks: {career_stats.get('BLK')}"
-    ret_str += f"\n\tSteals: {career_stats.get('STL')}"
-    ret_str += f"\n\tRebounds: {career_stats.get('REB')}"
-    ret_str += f"\n\t   Offensive: {career_stats.get('OREB')}"
-    ret_str += f"\n\t   Defensive: {career_stats.get('DREB')}"
+    ret_str += f"\n\tPoints: {all_info.get('PTS')}"
+    ret_str += f"\n\tAssists: {all_info.get('AST')}"
+    ret_str += f"\n\tBlocks: {all_info.get('BLK')}"
+    ret_str += f"\n\tSteals: {all_info.get('STL')}"
+    ret_str += f"\n\tRebounds: {all_info.get('REB')}"
+    ret_str += f"\n\t   Offensive: {all_info.get('OREB')}"
+    ret_str += f"\n\t   Defensive: {all_info.get('DREB')}"
 
     return ret_str
 
