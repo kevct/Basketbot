@@ -5,6 +5,7 @@ from nba_api.stats.endpoints import PlayerCareerStats, TeamInfoCommon
 from nba_api.stats.endpoints.commonplayerinfo import CommonPlayerInfo
 from nba_api.stats.endpoints.teamyearbyyearstats import TeamYearByYearStats
 from nba_api.stats.library.parameters import Season
+import fuzzyids
 
 def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_season) -> Optional[dict]:
     static_info = players.find_player_by_id(player_id)
@@ -107,42 +108,48 @@ def getPlayerCareerString(player_id: int) -> Optional[str]:
 
     return ret_str
 
-def getPlayerIdsByName(player_name: str) -> Optional[List[List]]:
+def getPlayerIdsByName(player_name: str, #Only required argument
+                       only_active: bool = False, fuzzy_match: bool = False) \
+                        -> Optional[Dict[int, str]]:
     """
-    Takes a string and returns all the names and IDs matching the string
-    :param player_name: name of the player to search for
-    :return: returns None if no matches found, returns an array of matching ids and their names otherwise
+    Function that takes a player name and returns a dictionary of matching names indexed by id
+    NOTE: any optional parameters set to True WILL make the function slower
+    :param player_name: str to search for
+    :param only_active: optional param to only return active players
+    :param fuzzy_match: optional param to use fuzzy matching if more or less than one result is returned
+    :return:
     """
 
     all_matches = players.find_players_by_full_name(player_name)
-    ret_list = []
+    ret_dict = {}
 
-    if len(all_matches) < 1:
-        return None
+    if all_matches is None or len(all_matches) < 1:
+        if fuzzy_match:
+            return fuzzyids.getFuzzyPlayerIdsByName(player_name, only_active=only_active)
+        else:
+            return None
+
+    elif only_active:
+        for match in all_matches:
+            ret_dict[match.get('id')] = match.get('full_name')
+
     else:
         for match in all_matches:
-            ret_list.append([match.get('id'), match.get('full_name')])
+            ret_dict[match.get('id')] = match.get('full_name')
 
-    return ret_list
+    if fuzzy_match and len(ret_dict) > 1:
+        return fuzzyids.getFuzzyPlayerIdsByName(player_name, only_active=only_active)
+    else:
+        return ret_dict
 
-def getActivePlayerIdsByName(player_name: str) -> Optional[List[List]]:
+def getActivePlayerIdsByName(player_name: str, fuzzy_match = False) -> Optional[Dict[int, str]]:
     """
     Takes a string and returns all the active names and IDs matching the string
     :param player_name: name of the player to search for
-    :return: returns None if no matches found, returns an array of matching ids and their names otherwise
+    :param fuzzy_match: whether or not to enable fuzzy matching if more or less than one match is returned
+    :return: a dictionary keyed by player id and with value player's full name
     """
-
-    all_matches = players.find_players_by_full_name(player_name)
-    ret_list = []
-
-    for match in all_matches:
-        if match.get('is_active'):
-            ret_list.append([match.get('id'), match.get('full_name')])
-
-    if len(ret_list) < 1:
-        return None
-    else:
-        return ret_list
+    return getPlayerIdsByName(player_name, only_active=True, fuzzy_match=fuzzy_match)
 
 def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
     static_info = players.find_player_by_id(player_id)
@@ -226,3 +233,4 @@ def getTeamIdsByName(team_name: str) -> Optional[List[List]]:
             ret_list.append([match.get('id'), match.get('full_name')])
 
     return ret_list
+
