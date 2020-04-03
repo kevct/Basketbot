@@ -91,6 +91,7 @@ def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_sea
         stats_dict['APG'] = round(target_season.get('AST') / target_season.get('GP'), 1)
         stats_dict['BPG'] = round(target_season.get('BLK') / target_season.get('GP'), 1)
         stats_dict['SPG'] = round(target_season.get('STL') / target_season.get('GP'), 1)
+
         return stats_dict
 
 def getPlayerCareerStatsByID(player_id: int) -> Optional[dict]:
