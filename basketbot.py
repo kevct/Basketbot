@@ -91,7 +91,8 @@ async def team(ctx, *args):
         name = name + " " + x
     
     embed = discord.Embed(title="Team Not Found", description="Double check that the team name is spelled correctly.", color = 0x595959)
-    teams = nba.getTeamIdsByName(name)
+    teams = nba.getTeamIdsByName(name.strip())
+    print(teams)
     if not teams == None:
         teamIds = list(teams.keys())
         teamNames = list(teams.values())
