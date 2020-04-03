@@ -12,20 +12,31 @@ import csv
 # NOTE - INSTALL EXTRAS WITH TEXTDISTANCE BECAUSE OTHERWISE IT'S REALLY SLOW
 # pip3 install textdistance[extras]
 
-# A constant distance that seems to work for getting relatively similar names
-FUZZY_MAX_DISTANCE = 0.1907407407
-# A name below this distance is probably what we're looking for, no need to keep searching
-FUZZY_MIN_DISTANCE = 0.1125
-# The default text distance searching algorithm (chosen because it's relatively fast and has consistently low ratios for
-# correct values
-default_distance_algorithm = tdist.JaroWinkler()
+# A constant distance that usually works for getting relatively similar names
+PLAYER_SINGLENAME_MAX_DISTANCE = 0.2
+PLAYER_FIRSTLAST_MAX_DISTANCE = 0.1907407407
+PLAYER_FULLNAME_MAX_DISTANCE = 0.3571428571
+TEAM_SINGLENAME_MAX_DISTANCE = 0.2738095238
+TEAM_FULLNAME_MAX_DISTANCE = 0.1997988939
+# A name below this distance is probably what we're looking for, usually only the correct result should be below this value
+PLAYER_SINGLENAME_MIN_DISTANCE = 0.09090909091
+PLAYER_FIRSTLAST_MIN_DISTANCE = 0.1125
+PLAYER_FULLNAME_MIN_DISTANCE = 0.2307692308
+TEAM_SINGLENAME_MIN_DISTANCE = .1805555556
+TEAM_FULLNAME_MIN_DISTANCE = 0.3470899471
+# The default text distance searching algorithms (chosen for speed and consistent ratios for correct values)
+player_singlename_distance_algorithm = tdist.RatcliffObershelp()
+player_firstlast_distance_algorithm = tdist.JaroWinkler()
+player_fullname_distance_algorithm = player_singlename_distance_algorithm
+team_singlename_distance_algorithm = player_singlename_distance_algorithm
+team_fullname_distance_algorithm = player_fullname_distance_algorithm
 
 #TODO - Detect player initials that are passed in
 
 def getFuzzyPlayerIdsByName(player_name: str,
                             only_active: bool = False,
-                            max_distance: float = FUZZY_MAX_DISTANCE, min_distance: float = FUZZY_MIN_DISTANCE,
-                            dist_algorithm: textdistance = default_distance_algorithm,
+                            max_distance: float = None, min_distance: float = None,
+                            dist_algorithm: textdistance.algorithms = None,
                             log_file: str = None, return_ratio: bool = False, only_return_best: bool = False) \
                             -> Optional[Dict[int, str]]:
     """
@@ -69,6 +80,15 @@ def getFuzzyPlayerIdsByName(player_name: str,
         #Only one name specified, check against first and last names
         name = player_names[0].lower()
 
+        if dist_algorithm is None:
+            dist_algorithm = player_singlename_distance_algorithm
+
+        if max_distance is None:
+            max_distance = PLAYER_SINGLENAME_MAX_DISTANCE
+
+        if min_distance is None:
+            min_distance = PLAYER_SINGLENAME_MIN_DISTANCE
+
         for nba_player in nba_data.players:
 
             if not only_active or (only_active and nba_player[nba_data.player_index_is_active]):
@@ -106,6 +126,15 @@ def getFuzzyPlayerIdsByName(player_name: str,
 
         name = player_name.strip().lower()
 
+        if dist_algorithm is None:
+            dist_algorithm = player_fullname_distance_algorithm
+
+        if max_distance is None:
+            max_distance = PLAYER_FULLNAME_MAX_DISTANCE
+
+        if min_distance is None:
+            min_distance = PLAYER_FULLNAME_MIN_DISTANCE
+
         for nba_player in nba_data.players:
             if not only_active or (only_active and nba_player[nba_data.player_index_is_active]):
                 # Get the string distance for the first and last names, and record the better one
@@ -134,6 +163,15 @@ def getFuzzyPlayerIdsByName(player_name: str,
         #Exactly two names specified, check against last name then first name
         first_name = player_names[0].lower()
         last_name = player_names[1].lower()
+
+        if dist_algorithm is None:
+            dist_algorithm = player_firstlast_distance_algorithm
+
+        if max_distance is None:
+            max_distance = PLAYER_FIRSTLAST_MAX_DISTANCE
+
+        if min_distance is None:
+            min_distance = PLAYER_FIRSTLAST_MIN_DISTANCE
 
         for nba_player in nba_data.players:
             if not only_active or (only_active and nba_player[nba_data.player_index_is_active]):
@@ -191,8 +229,8 @@ def getFuzzyPlayerIdsByName(player_name: str,
 
 
 def getFuzzyTeamIdsByName(team_name: str,
-                          max_distance: float = FUZZY_MAX_DISTANCE, min_distance: float = FUZZY_MIN_DISTANCE,
-                          dist_algorithm: textdistance = default_distance_algorithm,
+                          max_distance: Optional[float] = None, min_distance: Optional[float] = None,
+                          dist_algorithm: textdistance.algorithms = None,
                           log_file: str = None, return_ratio: bool = False, only_return_best: bool = False) \
                             -> Optional[Dict[int, str]]:
     """
@@ -232,6 +270,15 @@ def getFuzzyTeamIdsByName(team_name: str,
         #Only one name specified, check against city, nickname, and abbreviation
         name = team_names[0].lower()
 
+        if dist_algorithm is None:
+            dist_algorithm = team_singlename_distance_algorithm
+
+        if max_distance is None:
+            max_distance = TEAM_SINGLENAME_MAX_DISTANCE
+
+        if min_distance is None:
+            min_distance = TEAM_SINGLENAME_MIN_DISTANCE
+
         for nba_team in nba_data.teams:
 
             #Get the string distance for the city, nick, and abbrev, and record the better one
@@ -270,6 +317,15 @@ def getFuzzyTeamIdsByName(team_name: str,
         # More than one name specified, check against full names
 
         name = team_name.strip().lower()
+
+        if dist_algorithm is None:
+            dist_algorithm = team_fullname_distance_algorithm
+
+        if max_distance is None:
+            max_distance = TEAM_FULLNAME_MAX_DISTANCE
+
+        if min_distance is None:
+            min_distance = TEAM_FULLNAME_MIN_DISTANCE
 
         for nba_team in nba_data.teams:
             # Get the string distance for the first and last names, and record the better one

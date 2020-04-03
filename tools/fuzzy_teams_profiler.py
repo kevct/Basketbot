@@ -1,13 +1,12 @@
 import csv
-import nba_api.stats.static.players as players
+import nba_api.stats.static.teams as teams
 from textdistance.algorithms import *
 import time
 
-from fuzzyids import getFuzzyPlayerIdsByName as fuzz
+from fuzzyids import getFuzzyTeamIdsByName as fuzz
 
-one_stats_file = "one_stats_player.csv"
-two_stats_file = "two_stats_player.csv"
-full_stats_file = "full_stats_player.csv"
+one_stats_file = "one_stats_teams.csv"
+full_stats_file = "full_stats_teams.csv"
 misspelled = "nba_team_misspellings.csv"
 MISSPELLED_INDEX = 0
 CORRECT_INDEX = 1
@@ -25,7 +24,6 @@ with open(misspelled, 'r') as f:
     reader = csv.reader(f)
 
     one_stats_dict = {}
-    two_stats_dict = {}
     full_stats_dict = {}
 
     for algorithm in algorithms:
@@ -33,11 +31,6 @@ with open(misspelled, 'r') as f:
                                                     'avg_time': 0, 'total_correct_ratio': 0, 'total_incorrect_ratio': 0,
                                                     'max_correct_ratio': 0, 'min_correct_ratio': 1,
                                                     'max_incorrect_ratio': 0, 'min_incorrect_ratio': 1}
-        two_stats_dict[algorithm.__class__.__name__] = {'total': 0, 'correct': 0, 'incorrect': 0, 'total_time': 0,
-                                                        'avg_time': 0, 'total_correct_ratio': 0,
-                                                        'total_incorrect_ratio': 0,
-                                                        'max_correct_ratio': 0, 'min_correct_ratio': 1,
-                                                        'max_incorrect_ratio': 0, 'min_incorrect_ratio': 1}
         full_stats_dict[algorithm.__class__.__name__] = {'total': 0, 'correct': 0, 'incorrect': 0, 'total_time': 0,
                                                         'avg_time': 0, 'total_correct_ratio': 0,
                                                         'total_incorrect_ratio': 0,
@@ -47,32 +40,29 @@ with open(misspelled, 'r') as f:
     for row in reader:
 
         #First check if field has an ID instead of a name
-        player_id = None
+        team_id = None
         try:
-            player_id = int(row[CORRECT_INDEX])
+            team_id = int(row[CORRECT_INDEX])
         except ValueError:
             pass
 
-        # If it's not an ID, get the player by their name
-        if player_id is None:
-            players_dict = players.find_players_by_full_name(row[CORRECT_INDEX])
+        # If it's not an ID, get the team by their name
+        if team_id is None:
+            teams_dict = teams.find_teams_by_full_name(row[CORRECT_INDEX])
         else:
-            players_dict = [players.find_player_by_id(player_id)]
+            teams_dict = [teams.find_team_name_by_id(team_id)]
 
         # Don't run the test if we don't know what the solution should be
-        if not len(players_dict) == 1:
-            print(f"Couldn't find player matching {row[CORRECT_INDEX]}")
+        if not len(teams_dict) == 1:
+            print(f"Couldn't find team matching {row[CORRECT_INDEX]}")
         else:
             print(f"\"{row[MISSPELLED_INDEX]}\" ", end='')
 
             # Figure out which mode the fuzzy code is going to run in
-            player_names = row[MISSPELLED_INDEX].split()
-            if len(player_names) == 1:
+            team_names = row[MISSPELLED_INDEX].split()
+            if len(team_names) == 1:
                 stats_dict = one_stats_dict
                 print('(First or last name mode)')
-            elif len(player_names) == 2:
-                stats_dict = two_stats_dict
-                print('(First and last name mode)')
             else:
                 stats_dict = full_stats_dict
                 print('(Full name mode)')
@@ -92,7 +82,7 @@ with open(misspelled, 'r') as f:
                 this_stats_dict['total'] += 1
                 this_stats_dict['total_time'] += end - start
                 this_stats_dict['avg_time'] = this_stats_dict['total_time'] / this_stats_dict['total']
-                if best is None or not list(best.keys())[0] == players_dict[0].get('id'):
+                if best is None or not list(best.keys())[0] == teams_dict[0].get('id'):
                     print(f"incorrect:{round(best.get('ratio'), 4)}", end='')
                     this_stats_dict['incorrect'] += 1
                     this_stats_dict['total_incorrect_ratio'] += best.get('ratio')
@@ -126,8 +116,7 @@ with open(misspelled, 'r') as f:
 
                     print()
 
-for stats_file, stats_dict in [(one_stats_file, one_stats_dict), (two_stats_file, two_stats_dict),
-                               (full_stats_file, full_stats_dict)]:
+for stats_file, stats_dict in [(one_stats_file, one_stats_dict), (full_stats_file, full_stats_dict)]:
     print(stats_dict)
     with open(stats_file, 'w', newline='') as f:
         writer = csv.writer(f)
