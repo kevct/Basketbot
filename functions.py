@@ -188,7 +188,8 @@ def getPlayerIdsByName(player_name: str, #Only required argument
 
     elif only_active:
         for match in all_matches:
-            ret_dict[match.get('id')] = match.get('full_name')
+            if match.get('is_active'):
+                ret_dict[match.get('id')] = match.get('full_name')
 
     else:
         for match in all_matches:
