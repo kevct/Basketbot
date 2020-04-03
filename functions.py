@@ -216,6 +216,17 @@ def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
         return None
 
     return f"https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/{str(player_id)}.png"
+    
+def getTeamLogoURL(team_id: int) -> Optional[str]:
+    static_info = teams.find_team_name_by_id(team_id)
+
+    if static_info is None or len(static_info) < 1:
+        return None
+    
+    teamThreeLetter = (TeamInfoCommon(team_id = team_id, season_nullable=Season.current_season).get_normalized_dict().get('TeamInfoCommon')[0]).get("TEAM_ABBREVIATION").lower()
+    return f"https://a.espncdn.com/i/teamlogos/nba/500/{teamThreeLetter}.png"
+    #Discord does not support .svg file extensions
+    #return f"https://www.nba.com/assets/logos/teams/primary/web/{teamThreeLetter}.svg"
 
 def getTeamCareerStatsByID(team_id: int) -> Optional[Dict[str, Any]]:
     static_info = teams.find_team_name_by_id(team_id)
@@ -263,7 +274,9 @@ def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season)
     stats_dict = {}
 
     season_info = TeamInfoCommon(team_id = team_id, season_nullable=season_id).get_normalized_dict().get('TeamInfoCommon')[0]
-
+    season_stats = TeamInfoCommon(team_id = team_id, season_nullable=season_id).get_normalized_dict().get('TeamSeasonRanks')[0]
+    
+    
     stats_dict['TEAM_CONFERENCE'] = season_info.get('TEAM_CONFERENCE')
     stats_dict['CONF_RANK'] = season_info.get('CONF_RANK')
     stats_dict['TEAM_DIVISION'] = season_info.get('TEAM_DIVISION')
@@ -271,6 +284,16 @@ def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season)
     stats_dict['W'] = season_info.get('W')
     stats_dict['L'] = season_info.get('L')
     stats_dict['PCT'] = season_info.get('PCT')
+    stats_dict['TEAM_COLOR'] = getTeamColor(team_id)
+    stats_dict['SEASON_ID'] = season_id
+    stats_dict['PPG'] = season_stats['PTS_PG']
+    stats_dict['PTS_RANK'] = season_stats['PTS_RANK']
+    stats_dict['RPG'] = season_stats['REB_PG']
+    stats_dict['REB_RANK'] = season_stats['REB_RANK']
+    stats_dict['APG'] = season_stats['AST_PG']
+    stats_dict['AST_RANK'] = season_stats['AST_RANK']
+    stats_dict['OPPG'] = season_stats['OPP_PTS_PG']
+    stats_dict['OPPG_RANK'] = season_stats['OPP_PTS_RANK']
 
     return stats_dict
 
