@@ -7,6 +7,39 @@ from nba_api.stats.endpoints.teamyearbyyearstats import TeamYearByYearStats
 from nba_api.stats.library.parameters import Season
 import fuzzyids
 
+teamClrs = {
+    1610612737: 0xE03A3E, #Atlanta Hawks
+    1610612738: 0x007A33, #Boston Celtics
+    1610612739: 0x860038, #Cleveland Cavaliers
+    1610612740: 0x0C2340, #New Orleans Pelicans
+    1610612741: 0xCE1141, #Chicago Bulls
+    1610612742: 0x00538C, #Dallas Mavericks
+    1610612743: 0x0E2240, #Denver Nuggets
+    1610612744: 0x006BB6, #Golden State Warriors
+    1610612745: 0xCE1141, #Houston Rockets
+    1610612746: 0x1D428A, #Los Angeles Clippers
+    1610612747: 0xFDB927, #Los Angeles Lakers
+    1610612748: 0x98002E, #Miami Heat
+    1610612749: 0x00471B, #Milawukee Bucks
+    1610612750: 0x0C2340, #Minnesota Timberwolves
+    1610612751: 0x000000, #Brooklyn Nets
+    1610612752: 0xF58426, #New York Knicks
+    1610612753: 0x0077C0, #Orlando Magic
+    1610612754: 0xFDBB30, #Indiana Pacers
+    1610612755: 0x006BB6, #Philidelphia 76ers
+    1610612756: 0xE56020, #Phoenix Suns
+    1610612757: 0xE03A3E, #Portland Trail Blazers
+    1610612758: 0x5A2D81, #Sacramento Kings
+    1610612759: 0xC4CED4, #San Antonio Spurs
+    1610612760: 0x007AC1, #Oklahoma City Thunder
+    1610612761: 0xCE1141, #Toronto Raptors
+    1610612762: 0xF9A01B, #Utah Jazz
+    1610612763: 0x5D76A9, #Memphis Grizzlies
+    1610612764: 0x002B5C, #Washington Wizards
+    1610612765: 0xC8102E, #Detroit Pistons
+    1610612766: 0x00788C  #Charlotte Hornets
+}
+
 def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_season) -> Optional[dict]:
     static_info = players.find_player_by_id(player_id)
 
@@ -26,8 +59,26 @@ def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_sea
         return None
 
     else:
+    
+        common_info = CommonPlayerInfo(player_id=static_info.get('id')).get_normalized_dict() \
+            .get('CommonPlayerInfo')[0]
+        
         stats_dict = {}
 
+        stats_dict['FROM_YEAR'] = common_info.get('FROM_YEAR')
+        stats_dict['TO_YEAR'] = common_info.get('TO_YEAR')
+        stats_dict['TEAM_COLOR'] = getTeamColor(common_info.get('TEAM_ID'))
+        stats_dict['TEAM_CITY'] = common_info.get('TEAM_CITY')
+        stats_dict['TEAM_NAME'] = common_info.get('TEAM_NAME')
+        stats_dict['JERSEY'] = common_info.get('JERSEY')
+        stats_dict['POSITION'] = common_info.get('POSITION')
+        stats_dict['HEIGHT'] = common_info.get('HEIGHT')
+        stats_dict['WEIGHT'] = common_info.get('WEIGHT')
+        
+        stats_dict['SEASON_ID'] = target_season.get('SEASON_ID')
+        stats_dict['GP'] = target_season.get('GP')
+        stats_dict['GS'] = target_season.get('GS')
+        stats_dict['MIN'] = target_season.get('MIN')
         stats_dict['PTS'] = target_season.get('PTS')
         stats_dict['AST'] = target_season.get('AST')
         stats_dict['BLK'] = target_season.get('BLK')
@@ -35,6 +86,11 @@ def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_sea
         stats_dict['REB'] = target_season.get('REB')
         stats_dict['OREB'] = target_season.get('OREB')
         stats_dict['DREB'] = target_season.get('DREB')
+        stats_dict['PPG'] = round(target_season.get('PTS') / target_season.get('GP'), 1)
+        stats_dict['RPG'] = round(target_season.get('REB') / target_season.get('GP'), 1)
+        stats_dict['APG'] = round(target_season.get('AST') / target_season.get('GP'), 1)
+        stats_dict['BPG'] = round(target_season.get('BLK') / target_season.get('GP'), 1)
+        stats_dict['SPG'] = round(target_season.get('STL') / target_season.get('GP'), 1)
 
         return stats_dict
 
@@ -53,6 +109,7 @@ def getPlayerCareerStatsByID(player_id: int) -> Optional[dict]:
 
     stats_dict['FROM_YEAR'] = common_info.get('FROM_YEAR')
     stats_dict['TO_YEAR'] = common_info.get('TO_YEAR')
+    stats_dict['TEAM_COLOR'] = getTeamColor(common_info.get('TEAM_ID'))
     stats_dict['TEAM_CITY'] = common_info.get('TEAM_CITY')
     stats_dict['TEAM_NAME'] = common_info.get('TEAM_NAME')
     stats_dict['JERSEY'] = common_info.get('JERSEY')
@@ -234,3 +291,7 @@ def getTeamIdsByName(team_name: str) -> Optional[List[List]]:
 
     return ret_list
 
+def getTeamColor(team_code: int) -> int:
+    if team_code in teamClrs:
+        return teamClrs[team_code]
+    return 0xFFFFFE
