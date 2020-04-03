@@ -1,14 +1,11 @@
-from typing import Optional, Union, List, Dict, Any
+from typing import Optional, List, Dict, Any
 
 from nba_api.stats.static import players, teams
 from nba_api.stats.endpoints import PlayerCareerStats, TeamInfoCommon
 from nba_api.stats.endpoints.commonplayerinfo import CommonPlayerInfo
 from nba_api.stats.endpoints.teamyearbyyearstats import TeamYearByYearStats
 from nba_api.stats.library.parameters import Season
-from nba_api.stats.library.data import teams as teams
-
-#This is a constant that I don't really expect to change
-DEFAULT_DISPLAY_LENGTH = 10
+import fuzzyids
 
 teamClrs = {
     1610612737: 0xE03A3E, #Atlanta Hawks
@@ -62,8 +59,26 @@ def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_sea
         return None
 
     else:
+    
+        common_info = CommonPlayerInfo(player_id=static_info.get('id')).get_normalized_dict() \
+            .get('CommonPlayerInfo')[0]
+        
         stats_dict = {}
 
+        stats_dict['FROM_YEAR'] = common_info.get('FROM_YEAR')
+        stats_dict['TO_YEAR'] = common_info.get('TO_YEAR')
+        stats_dict['TEAM_COLOR'] = getTeamColor(common_info.get('TEAM_ID'))
+        stats_dict['TEAM_CITY'] = common_info.get('TEAM_CITY')
+        stats_dict['TEAM_NAME'] = common_info.get('TEAM_NAME')
+        stats_dict['JERSEY'] = common_info.get('JERSEY')
+        stats_dict['POSITION'] = common_info.get('POSITION')
+        stats_dict['HEIGHT'] = common_info.get('HEIGHT')
+        stats_dict['WEIGHT'] = common_info.get('WEIGHT')
+        
+        stats_dict['SEASON_ID'] = target_season.get('SEASON_ID')
+        stats_dict['GP'] = target_season.get('GP')
+        stats_dict['GS'] = target_season.get('GS')
+        stats_dict['MIN'] = target_season.get('MIN')
         stats_dict['PTS'] = target_season.get('PTS')
         stats_dict['AST'] = target_season.get('AST')
         stats_dict['BLK'] = target_season.get('BLK')
@@ -71,7 +86,11 @@ def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_sea
         stats_dict['REB'] = target_season.get('REB')
         stats_dict['OREB'] = target_season.get('OREB')
         stats_dict['DREB'] = target_season.get('DREB')
-
+        stats_dict['PPG'] = round(target_season.get('PTS') / target_season.get('GP'), 1)
+        stats_dict['RPG'] = round(target_season.get('REB') / target_season.get('GP'), 1)
+        stats_dict['APG'] = round(target_season.get('AST') / target_season.get('GP'), 1)
+        stats_dict['BPG'] = round(target_season.get('BLK') / target_season.get('GP'), 1)
+        stats_dict['SPG'] = round(target_season.get('STL') / target_season.get('GP'), 1)
         return stats_dict
 
 def getPlayerCareerStatsByID(player_id: int) -> Optional[dict]:
@@ -89,7 +108,7 @@ def getPlayerCareerStatsByID(player_id: int) -> Optional[dict]:
 
     stats_dict['FROM_YEAR'] = common_info.get('FROM_YEAR')
     stats_dict['TO_YEAR'] = common_info.get('TO_YEAR')
-    stats_dict['TEAM_ID'] = common_info.get('TEAM_ID')
+    stats_dict['TEAM_COLOR'] = getTeamColor(common_info.get('TEAM_ID'))
     stats_dict['TEAM_CITY'] = common_info.get('TEAM_CITY')
     stats_dict['TEAM_NAME'] = common_info.get('TEAM_NAME')
     stats_dict['JERSEY'] = common_info.get('JERSEY')
@@ -145,23 +164,48 @@ def getPlayerCareerString(player_id: int) -> Optional[str]:
 
     return ret_str
 
-def getPlayerIdsByName(player_name: str) -> Optional[List[List]]:
+def getPlayerIdsByName(player_name: str, #Only required argument
+                       only_active: bool = False, fuzzy_match: bool = False) \
+                        -> Optional[Dict[int, str]]:
     """
-    Takes a string and returns all the names and IDs matching the string
-    :param player_name: name of the player to search for
-    :return: returns None if no matches found, returns an array of matching ids and their names otherwise
+    Function that takes a player name and returns a dictionary of matching names indexed by id
+    NOTE: any optional parameters set to True WILL make the function slower
+    :param player_name: str to search for
+    :param only_active: optional param to only return active players
+    :param fuzzy_match: optional param to use fuzzy matching if more or less than one result is returned
+    :return:
     """
 
     all_matches = players.find_players_by_full_name(player_name)
-    ret_list = []
+    ret_dict = {}
 
-    if len(all_matches) < 1:
-        return None
+    if all_matches is None or len(all_matches) < 1:
+        if fuzzy_match:
+            return fuzzyids.getFuzzyPlayerIdsByName(player_name, only_active=only_active)
+        else:
+            return None
+
+    elif only_active:
+        for match in all_matches:
+            ret_dict[match.get('id')] = match.get('full_name')
+
     else:
         for match in all_matches:
-            ret_list.append([match.get('id'), match.get('full_name')])
+            ret_dict[match.get('id')] = match.get('full_name')
 
-    return ret_list
+    if fuzzy_match and len(ret_dict) > 1:
+        return fuzzyids.getFuzzyPlayerIdsByName(player_name, only_active=only_active)
+    else:
+        return ret_dict
+
+def getActivePlayerIdsByName(player_name: str, fuzzy_match = False) -> Optional[Dict[int, str]]:
+    """
+    Takes a string and returns all the active names and IDs matching the string
+    :param player_name: name of the player to search for
+    :param fuzzy_match: whether or not to enable fuzzy matching if more or less than one match is returned
+    :return: a dictionary keyed by player id and with value player's full name
+    """
+    return getPlayerIdsByName(player_name, only_active=True, fuzzy_match=fuzzy_match)
 
 def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
     static_info = players.find_player_by_id(player_id)
@@ -171,7 +215,7 @@ def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
 
     return f"https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/{str(player_id)}.png"
 
-def getTeamCareerStatsByID(team_id: int) -> Optional[str]:
+def getTeamCareerStatsByID(team_id: int) -> Optional[Dict[str, Any]]:
     static_info = teams.find_team_name_by_id(team_id)
 
     if static_info is None or len(static_info) < 1:
@@ -245,7 +289,7 @@ def getTeamIdsByName(team_name: str) -> Optional[List[List]]:
             ret_list.append([match.get('id'), match.get('full_name')])
 
     return ret_list
-    
+
 def getTeamColor(team_code: int) -> int:
     if team_code in teamClrs:
         return teamClrs[team_code]
