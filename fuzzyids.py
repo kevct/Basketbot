@@ -25,11 +25,13 @@ PLAYER_FULLNAME_MIN_DISTANCE = 0.2307692308
 TEAM_SINGLENAME_MIN_DISTANCE = .1805555556
 TEAM_FULLNAME_MIN_DISTANCE = 0.3470899471
 # The default text distance searching algorithms (chosen for speed and consistent ratios for correct values)
-player_singlename_distance_algorithm = tdist.RatcliffObershelp()
-player_firstlast_distance_algorithm = tdist.JaroWinkler()
-player_fullname_distance_algorithm = player_singlename_distance_algorithm
-team_singlename_distance_algorithm = player_singlename_distance_algorithm
-team_fullname_distance_algorithm = player_fullname_distance_algorithm
+jaro_winkler = tdist.JaroWinkler()
+ratcliff_obershelp = tdist.RatcliffObershelp()
+player_singlename_distance_algorithm = ratcliff_obershelp
+player_firstlast_distance_algorithm = jaro_winkler
+player_fullname_distance_algorithm = ratcliff_obershelp
+team_singlename_distance_algorithm = jaro_winkler
+team_fullname_distance_algorithm = jaro_winkler
 
 #TODO - Detect player initials that are passed in
 
