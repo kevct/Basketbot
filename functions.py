@@ -274,23 +274,29 @@ def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season)
 
     return stats_dict
 
-def getTeamIdsByName(team_name: str) -> Optional[List[List]]:
+def getTeamIdsByName(team_name: str, fuzzy_match: bool = False) -> Optional[Dict[int, str]]:
     """
     Takes a string name and returns a list of all the teams and ids that match that string
     :param team_name:
     :return:
     """
     all_matches = teams.find_teams_by_full_name(team_name)
-    ret_list = []
+    ret_dict = {}
 
-    if len(all_matches) < 1:
-        return None
+    if all_matches is None or len(all_matches) < 1:
+        if fuzzy_match:
+            return fuzzyids.getFuzzyTeamIdsByName(team_name)
+        else:
+            return None
 
     else:
         for match in all_matches:
-            ret_list.append([match.get('id'), match.get('full_name')])
+            ret_dict[match.get('id')] = match.get('full_name')
 
-    return ret_list
+    if fuzzy_match and len(ret_dict) > 1:
+        return fuzzyids.getFuzzyPlayerIdsByName(team_name)
+    else:
+        return ret_dict
 
 def getTeamColor(team_code: int) -> int:
     if team_code in teamClrs:
