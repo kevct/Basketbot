@@ -12,19 +12,21 @@ import csv
 # NOTE - INSTALL EXTRAS WITH TEXTDISTANCE BECAUSE OTHERWISE IT'S REALLY SLOW
 # pip3 install textdistance[extras]
 
-# A constant distance that usually works for getting relatively similar names
+# A constant distance that usually works for getting relatively similar names (based on profiler returned max_correct_ratio)
 PLAYER_SINGLENAME_MAX_DISTANCE = 0.2
 PLAYER_FIRSTLAST_MAX_DISTANCE = 0.1907407407
 PLAYER_FULLNAME_MAX_DISTANCE = 0.3571428571
 TEAM_SINGLENAME_MAX_DISTANCE = 0.2738095238
 TEAM_FULLNAME_MAX_DISTANCE = 0.1997988939
 # A name below this distance is probably what we're looking for, usually only the correct result should be below this value
+# (Based on profiler returned min_incorrect_ratio)
 PLAYER_SINGLENAME_MIN_DISTANCE = 0.09090909091
 PLAYER_FIRSTLAST_MIN_DISTANCE = 0.1125
 PLAYER_FULLNAME_MIN_DISTANCE = 0.2307692308
 TEAM_SINGLENAME_MIN_DISTANCE = .1805555556
 TEAM_FULLNAME_MIN_DISTANCE = 0.3470899471
 # The default text distance searching algorithms (chosen for speed and consistent ratios for correct values)
+# (based on profiler returned correct_percent)
 jaro_winkler = tdist.JaroWinkler()
 ratcliff_obershelp = tdist.RatcliffObershelp()
 player_singlename_distance_algorithm = ratcliff_obershelp
