@@ -177,12 +177,17 @@ def getPlayerIdsByName(player_name: str, #Only required argument
     :return:
     """
 
-    all_matches = players.find_players_by_full_name(player_name)
+    stripped_name = player_name.strip()
+
+    if stripped_name == "":
+        return None
+
+    all_matches = players.find_players_by_full_name(stripped_name)
     ret_dict = {}
 
     if all_matches is None or len(all_matches) < 1:
         if fuzzy_match:
-            return fuzzyids.getFuzzyPlayerIdsByName(player_name, only_active=only_active)
+            return fuzzyids.getFuzzyPlayerIdsByName(stripped_name, only_active=only_active)
         else:
             return None
 
@@ -196,7 +201,7 @@ def getPlayerIdsByName(player_name: str, #Only required argument
             ret_dict[match.get('id')] = match.get('full_name')
 
     if fuzzy_match and len(ret_dict) > 1:
-        return fuzzyids.getFuzzyPlayerIdsByName(player_name, only_active=only_active)
+        return fuzzyids.getFuzzyPlayerIdsByName(stripped_name, only_active=only_active)
     else:
         return ret_dict
 
@@ -303,12 +308,18 @@ def getTeamIdsByName(team_name: str, fuzzy_match: bool = False) -> Optional[Dict
     :param team_name:
     :return:
     """
-    all_matches = teams.find_teams_by_full_name(team_name)
+
+    stripped_name = team_name.strip()
+
+    if stripped_name == "":
+        return None
+
+    all_matches = teams.find_teams_by_full_name(stripped_name)
     ret_dict = {}
 
     if all_matches is None or len(all_matches) < 1:
         if fuzzy_match:
-            return fuzzyids.getFuzzyTeamIdsByName(team_name)
+            return fuzzyids.getFuzzyTeamIdsByName(stripped_name)
         else:
             return None
 
@@ -317,7 +328,7 @@ def getTeamIdsByName(team_name: str, fuzzy_match: bool = False) -> Optional[Dict
             ret_dict[match.get('id')] = match.get('full_name')
 
     if fuzzy_match and len(ret_dict) > 1:
-        return fuzzyids.getFuzzyPlayerIdsByName(team_name)
+        return fuzzyids.getFuzzyPlayerIdsByName(stripped_name)
     else:
         return ret_dict
 
