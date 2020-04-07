@@ -109,6 +109,9 @@ async def on_ready():
 # Enable logging
 logging.basicConfig()
 
+# Uncomment the following line for proxy debug messages
+# logging.getLogger(proxied_endpoint.__name__).setLevel(logging.DEBUG)
+
 # If we can't connect to NBA servers, no reason to start the bot until we're sure we can
 if not proxied_endpoint.is_direct_connect_allowed():
     LOGGER.info("Direct connection to NBA blocked, looking for available proxies")
