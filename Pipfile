@@ -9,6 +9,7 @@ verify_ssl = true
 requests = "*"
 nba-api = "*"
 textdistance = {extras = ["jarowinkler"],version = "*"}
+proxybroker = "*"
 
 [requires]
 python_version = "3.7"

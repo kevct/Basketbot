@@ -7,8 +7,11 @@ import discord
 import os
 import discord.ext.commands as commands
 import functions as nba
+import proxied_endpoint
+import logging
 
 TOKEN = open("token.txt", 'r').read()
+LOGGER = logging.getLogger(__name__)
 
 bot = commands.Bot(command_prefix='%')
 
@@ -103,4 +106,13 @@ async def on_ready():
     print(bot.user.id)
     print("------")
 
+# Enable logging
+logging.basicConfig()
+
+# If we can't connect to NBA servers, no reason to start the bot until we're sure we can
+if not proxied_endpoint.is_direct_connect_allowed():
+    LOGGER.info("Direct connection to NBA blocked, looking for available proxies")
+    proxied_endpoint.populate_good_proxies(min_good_proxies=1, load_from_file=True)
+
+LOGGER.info("Starting bot")
 bot.run(TOKEN)

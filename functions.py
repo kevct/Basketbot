@@ -1,10 +1,9 @@
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 
 from nba_api.stats.static import players, teams
-from nba_api.stats.endpoints import PlayerCareerStats, TeamInfoCommon
-from nba_api.stats.endpoints.commonplayerinfo import CommonPlayerInfo
-from nba_api.stats.endpoints.teamyearbyyearstats import TeamYearByYearStats
+from nba_api.stats.endpoints import PlayerCareerStats, TeamInfoCommon, CommonPlayerInfo, TeamYearByYearStats
 from nba_api.stats.library.parameters import Season
+from proxied_endpoint import ProxiedEndpoint
 import fuzzyids
 
 teamClrs = {
@@ -40,13 +39,13 @@ teamClrs = {
     1610612766: 0x00788C  #Charlotte Hornets
 }
 
-def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_season) -> Optional[dict]:
+def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_season, use_proxy = None) -> Optional[dict]:
     static_info = players.find_player_by_id(player_id)
 
     if static_info is None or len(static_info) < 1:
         return None
 
-    all_seasons = PlayerCareerStats(player_id=static_info.get('id')).get_normalized_dict().get('SeasonTotalsRegularSeason')
+    all_seasons = ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict().get('SeasonTotalsRegularSeason')
 
     target_season = None
 
@@ -60,7 +59,7 @@ def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_sea
 
     else:
     
-        common_info = CommonPlayerInfo(player_id=static_info.get('id')).get_normalized_dict() \
+        common_info = ProxiedEndpoint(CommonPlayerInfo, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict() \
             .get('CommonPlayerInfo')[0]
         
         stats_dict = {}
@@ -94,7 +93,7 @@ def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_sea
 
         return stats_dict
 
-def getPlayerCareerStatsByID(player_id: int) -> Optional[dict]:
+def getPlayerCareerStatsByID(player_id: int, use_proxy: Optional[bool] = None) -> Optional[dict]:
     static_info = players.find_player_by_id(player_id)
 
     if static_info is None or len(static_info) < 1:
@@ -102,9 +101,9 @@ def getPlayerCareerStatsByID(player_id: int) -> Optional[dict]:
 
     stats_dict = {}
 
-    common_info = CommonPlayerInfo(player_id=static_info.get('id')).get_normalized_dict() \
+    common_info = ProxiedEndpoint(CommonPlayerInfo, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict() \
         .get('CommonPlayerInfo')[0]
-    career_stats = PlayerCareerStats(player_id=static_info.get('id')).get_normalized_dict() \
+    career_stats = ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict() \
         .get('CareerTotalsRegularSeason')[0]
 
     stats_dict['FROM_YEAR'] = common_info.get('FROM_YEAR')
@@ -222,7 +221,7 @@ def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
 
     return f"https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/{str(player_id)}.png"
 
-def getTeamCareerStatsByID(team_id: int) -> Optional[Dict[str, Any]]:
+def getTeamCareerStatsByID(team_id: int, use_proxy: Optional[bool] = None) -> Optional[Dict[str, Any]]:
     static_info = teams.find_team_name_by_id(team_id)
 
     if static_info is None or len(static_info) < 1:
@@ -230,7 +229,7 @@ def getTeamCareerStatsByID(team_id: int) -> Optional[Dict[str, Any]]:
 
     stats_dict = {}
 
-    all_seasons = TeamYearByYearStats(team_id = team_id).get_normalized_dict().get('TeamStats')
+    all_seasons = ProxiedEndpoint(TeamYearByYearStats, team_id = team_id, use_proxy=use_proxy).get_normalized_dict().get('TeamStats')
     stats_dict['W'] = 0
     stats_dict['L'] = 0
     stats_dict['PCT'] = 0
@@ -259,7 +258,7 @@ def getTeamCareerStatsByID(team_id: int) -> Optional[Dict[str, Any]]:
 
     return stats_dict
 
-def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season) -> Optional[Dict[str, Any]]:
+def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season, use_proxy: Optional[bool] = None) -> Optional[Dict[str, Any]]:
     static_info = teams.find_team_name_by_id(team_id)
 
     if static_info is None or len(static_info) < 1:
@@ -267,7 +266,7 @@ def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season)
 
     stats_dict = {}
 
-    season_info = TeamInfoCommon(team_id = team_id, season_nullable=season_id).get_normalized_dict().get('TeamInfoCommon')[0]
+    season_info = ProxiedEndpoint(TeamInfoCommon, team_id = team_id, season_nullable=season_id, use_proxy=use_proxy).get_normalized_dict().get('TeamInfoCommon')[0]
 
     stats_dict['TEAM_CONFERENCE'] = season_info.get('TEAM_CONFERENCE')
     stats_dict['CONF_RANK'] = season_info.get('CONF_RANK')
