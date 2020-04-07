@@ -106,16 +106,18 @@ async def on_ready():
     print(bot.user.id)
     print("------")
 
-# Enable logging
-logging.basicConfig()
+def setup():
+    # Enable logging
+    logging.basicConfig()
 
-# Uncomment the following line for proxy debug messages
-# logging.getLogger(proxied_endpoint.__name__).setLevel(logging.DEBUG)
+    # Uncomment the following line for proxy debug messages
+    # logging.getLogger(proxied_endpoint.__name__).setLevel(logging.DEBUG)
 
-# If we can't connect to NBA servers, no reason to start the bot until we're sure we can
-if not proxied_endpoint.is_direct_connect_allowed():
-    LOGGER.info("Direct connection to NBA blocked, looking for available proxies")
-    proxied_endpoint.populate_good_proxies(min_good_proxies=1, load_from_file=True)
+    # If we can't connect to NBA servers, no reason to start the bot until we're sure we can
+    if not proxied_endpoint.is_direct_connect_allowed():
+        LOGGER.info("Direct connection to NBA blocked, looking for available proxies")
+        proxied_endpoint.populate_good_proxies(min_good_proxies=1, load_from_file=True)
 
+setup()
 LOGGER.info("Starting bot")
 bot.run(TOKEN)
