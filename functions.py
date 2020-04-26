@@ -123,6 +123,9 @@ def getPlayerCareerStatsByID(player_id: int) -> Optional[dict]:
     stats_dict['REB'] = career_stats.get('REB')
     stats_dict['OREB'] = career_stats.get('OREB')
     stats_dict['DREB'] = career_stats.get('DREB')
+    stats_dict['DRAFT_YEAR'] = common_info.get('DRAFT_YEAR')
+    stats_dict['DRAFT_ROUND'] = common_info.get('DRAFT_ROUND')
+    stats_dict['DRAFT_NUMBER'] = common_info.get('DRAFT_NUMBER')
 
     return stats_dict
 
