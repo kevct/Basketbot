@@ -7,8 +7,11 @@ import discord
 import os
 import discord.ext.commands as commands
 import functions as nba
+import proxied_endpoint
+import logging
 
 TOKEN = open("token.txt", 'r').read()
+LOGGER = logging.getLogger(__name__)
 
 bot = commands.Bot(command_prefix='%')
 
@@ -135,6 +138,22 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print("------")
+
+
+def setup():
+    # Enable logging
+    logging.basicConfig()
+
+    # Uncomment the following line for proxy debug messages
+    # logging.getLogger(proxied_endpoint.__name__).setLevel(logging.DEBUG)
+
+    # If we can't connect to NBA servers, no reason to start the bot until we're sure we can
+    if not proxied_endpoint.is_direct_connect_allowed():
+        LOGGER.info("Direct connection to NBA blocked, looking for available proxies")
+        proxied_endpoint.populate_good_proxies(min_good_proxies=1, load_from_file=True)
+
+setup()
+LOGGER.info("Starting bot")
 
 """Credit to https://stackoverflow.com/users/857390/florian-brucker for this function"""
 def make_ordinal(n):
