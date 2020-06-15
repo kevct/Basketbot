@@ -1,3 +1,5 @@
 
 token.txt
 __pycache__/functions.cpython-38.pyc
+__pycache__/fuzzyids.cpython-38.pyc
+__pycache__/proxied_endpoint.cpython-38.pyc
