@@ -3,18 +3,16 @@ import random
 from time import time
 from typing import Set
 import logging
-
 from proxybroker import Broker
 from requests.exceptions import ReadTimeout, ProxyError, SSLError, ConnectTimeout, ConnectionError
 from nba_api.stats.endpoints.commonplayerinfo import CommonPlayerInfo
+
+from definitions import GOOD_PROXIES_FILE, BAD_PROXIES_FILE, BLOCKED_PROXIES_FILE
 
 GOOD_PROXIES = set()
 BAD_PROXIES = set()
 BLOCKED_PROXIES = set()
 DIRECT_CONNECT_ALLOWED = None
-GOOD_PROXIES_DEFAULTFILE = 'good_proxies.txt'
-BAD_PROXIES_DEFAULTFILE = 'bad_proxies.txt'
-BLOCKED_PROXIES_DEFAULTFILE = 'blocked_proxies.txt'
 LOGGER = logging.getLogger(__name__)
 
 
@@ -91,9 +89,9 @@ async def process_grabbed_proxies(grabbed_proxies: asyncio.Queue, proxies_to_tes
                 proxies_to_test.add(proxy_url)
 
 
-async def populate_good_proxies(good_proxies_filename: str = GOOD_PROXIES_DEFAULTFILE,
-                          bad_proxies_filename: str = BAD_PROXIES_DEFAULTFILE,
-                          blocked_proxies_filename: str = BLOCKED_PROXIES_DEFAULTFILE,
+async def populate_good_proxies(good_proxies_filename: str = GOOD_PROXIES_FILE,
+                          bad_proxies_filename: str = BAD_PROXIES_FILE,
+                          blocked_proxies_filename: str = BLOCKED_PROXIES_FILE,
                           min_good_proxies: int = 1,
                           load_from_file: bool = False,
                           save_to_file=True,
@@ -193,7 +191,7 @@ class DeferredEndpoint:
         return self.endpoint_class(**self.kwargs)
 
 
-def ProxiedEndpoint(endpoint_class, **kwargs):
+async def ProxiedEndpoint(endpoint_class, **kwargs):
     # Modified version of DeferredEndpoint to automatically get the current proxy and use it
 
         if (kwargs.get('use_proxy') is None and not is_direct_connect_allowed()) or \
@@ -203,7 +201,7 @@ def ProxiedEndpoint(endpoint_class, **kwargs):
             kwargs.pop('use_proxy', None)
 
             while True:
-                proxy_url = asyncio.run(get_random_good_proxy())
+                proxy_url = await get_random_good_proxy()
 
                 # insert the proxy url into the arguments for the endpoint call
                 kwargs['proxy'] = proxy_url
@@ -252,7 +250,10 @@ def test_nba_noproxy() -> bool:
 def is_direct_connect_allowed() -> bool:
     global DIRECT_CONNECT_ALLOWED
 
-    while DIRECT_CONNECT_ALLOWED is None:
-        test_nba_noproxy()
+    if DIRECT_CONNECT_ALLOWED is None:
+        success = test_nba_noproxy()
 
-    return DIRECT_CONNECT_ALLOWED
+        return success
+
+    else:
+        return DIRECT_CONNECT_ALLOWED
