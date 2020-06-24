@@ -8,6 +8,7 @@ import discord.ext.commands as commands
 import functions as nba
 import proxied_endpoint
 import logging
+from definitions import TOKEN_FILE
 
 TOKEN = None
 
@@ -27,7 +28,7 @@ async def playercareerstats(ctx, *args):
     embed = discord.Embed(title="Player Not Found",
                           description="Double check that the player name is spelled correctly.", color=0x595959)
     players = await nba.getPlayerIdsByName(name.strip(), False, True)
-    if not players == None:  # If the list of players is not empty
+    if players is not None:  # If the list of players is not empty
         playerIds = list(players.keys())
         playerNames = list(players.values())
         if len(playerIds) > 1:  # If there are multiple players with the same name then list out all the players
@@ -208,6 +209,6 @@ def make_ordinal(n):
 
 if __name__ == '__main__':
     setup()
-    TOKEN = open("token.txt", 'r').read()
+    TOKEN = open(TOKEN_FILE, 'r').read()
     LOGGER.info("Starting bot")
     bot.run(TOKEN)
