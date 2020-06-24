@@ -45,12 +45,9 @@ async def playercareerstats(ctx, *args):
         else:  # List the player's stats
             stats = await nba.getPlayerCareerStatsByID(playerIds[0])
             height = stats["HEIGHT"].split("-")
-            embed = discord.Embed(title=playerNames[0],
-                                  description=stats["TEAM_CITY"] + " " + stats["TEAM_NAME"] + " | #" + stats[
-                                      "JERSEY"] + " | "
-                                              + stats["POSITION"] + "\n" + height[0] + "'" + height[1] + "\"" + " | " +
-                                              stats["WEIGHT"] + " lbs" + " | " + str(stats["FROM_YEAR"]) + " - " + str(
-                                      stats["TO_YEAR"]), color=stats["TEAM_COLOR"])
+            embed = discord.Embed(title=playerNames[0], description= stats["TEAM_CITY"] + " " + stats["TEAM_NAME"] + " | #" + stats["JERSEY"] + " | "  
+                + stats["POSITION"] + "\n" + height[0] + "'" + height[1] + "\"" + " | " + stats["WEIGHT"] + " lbs" + " | " + str(stats["FROM_YEAR"]) + " - " + str(stats["TO_YEAR"])
+                + "\nDraft Info: " + str(stats["DRAFT_YEAR"]) + " | Round " + str(stats["DRAFT_ROUND"]) + ", Pick " + str(stats["DRAFT_NUMBER"]), color = stats["TEAM_COLOR"])
             embed.set_thumbnail(url=nba.getPlayerHeadshotURL(playerIds[0]))
             embed.add_field(name="Career Points", value="**" + str(stats["PTS"]) + "**", inline=False)
             embed.add_field(name="Career Rebounds", value="**" + str(stats["REB"]) + "**", inline=False)
