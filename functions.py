@@ -167,7 +167,7 @@ def getPlayerCareerString(player_id: int) -> Optional[str]:
 
     return ret_str
 
-def getPlayerIdsByName(player_name: str, #Only required argument
+async def getPlayerIdsByName(player_name: str, #Only required argument
                        only_active: bool = False, fuzzy_match: bool = False) \
                         -> Optional[Dict[int, str]]:
     """
@@ -207,14 +207,14 @@ def getPlayerIdsByName(player_name: str, #Only required argument
     else:
         return ret_dict
 
-def getActivePlayerIdsByName(player_name: str, fuzzy_match = False) -> Optional[Dict[int, str]]:
+async def getActivePlayerIdsByName(player_name: str, fuzzy_match = False) -> Optional[Dict[int, str]]:
     """
     Takes a string and returns all the active names and IDs matching the string
     :param player_name: name of the player to search for
     :param fuzzy_match: whether or not to enable fuzzy matching if more or less than one match is returned
     :return: a dictionary keyed by player id and with value player's full name
     """
-    return getPlayerIdsByName(player_name, only_active=True, fuzzy_match=fuzzy_match)
+    return await getPlayerIdsByName(player_name, only_active=True, fuzzy_match=fuzzy_match)
 
 def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
     static_info = players.find_player_by_id(player_id)
@@ -303,7 +303,7 @@ def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season,
 
     return stats_dict
 
-def getTeamIdsByName(team_name: str, fuzzy_match: bool = False) -> Optional[Dict[int, str]]:
+async def getTeamIdsByName(team_name: str, fuzzy_match: bool = False) -> Optional[Dict[int, str]]:
     """
     Takes a string name and returns a list of all the teams and ids that match that string
     :param team_name:

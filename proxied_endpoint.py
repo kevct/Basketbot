@@ -84,13 +84,14 @@ async def process_grabbed_proxies(grabbed_proxies: asyncio.Queue, proxies_to_tes
 
         if proxy is not None:
             proxy_url = f"{proxy.host}:{proxy.port}"
+            LOGGER.debug(f"Got {proxy_url}")
             if proxy_url not in GOOD_PROXIES and \
                     proxy_url not in BAD_PROXIES and \
                     proxy_url not in BLOCKED_PROXIES:
                 proxies_to_test.add(proxy_url)
 
 
-def populate_good_proxies(good_proxies_filename: str = GOOD_PROXIES_DEFAULTFILE,
+async def populate_good_proxies(good_proxies_filename: str = GOOD_PROXIES_DEFAULTFILE,
                           bad_proxies_filename: str = BAD_PROXIES_DEFAULTFILE,
                           blocked_proxies_filename: str = BLOCKED_PROXIES_DEFAULTFILE,
                           min_good_proxies: int = 1,
@@ -110,14 +111,14 @@ def populate_good_proxies(good_proxies_filename: str = GOOD_PROXIES_DEFAULTFILE,
     broker = Broker(grabbed_proxies, timeout=broker_timeout)
 
     while len(GOOD_PROXIES) < min_good_proxies:
-        loop = asyncio.get_event_loop()
-        tasks = asyncio.gather(broker.grab(countries=['US']),
-                               process_grabbed_proxies(grabbed_proxies, proxies_to_test,
-                                                       min_proxies=proxy_test_batch_size))
+        proxy_processor = process_grabbed_proxies(grabbed_proxies, proxies_to_test,
+                                                       min_proxies=proxy_test_batch_size)
+        tasks = await asyncio.gather(broker.grab(countries=['US']),
+                               proxy_processor)
 
         try:
             LOGGER.debug("Starting proxy finding async loop")
-            loop.run_until_complete(tasks)
+            await proxy_processor
         except OSError:
             LOGGER.debug("ProxyBroker OSError caught")
             # Needed due to bug in ProxyBroker (https://github.com/constverum/ProxyBroker/issues/130)
@@ -137,7 +138,9 @@ def populate_good_proxies(good_proxies_filename: str = GOOD_PROXIES_DEFAULTFILE,
 
         else:
             LOGGER.debug(f"testing {len(proxies_to_test)} proxies")
-            for proxy_url in proxies_to_test:
+
+            #Lock the set so we can access it safely
+            for proxy_url in list(proxies_to_test):
 
                 try:
                     start = time()
@@ -156,20 +159,26 @@ def populate_good_proxies(good_proxies_filename: str = GOOD_PROXIES_DEFAULTFILE,
                     LOGGER.debug(f"proxy connection from {proxy_url} failed with error {e}")
                     BAD_PROXIES.add(proxy_url)
 
-            if save_to_file:
-                save_proxies_to_file(good_proxies_filename, bad_proxies_filename, blocked_proxies_filename)
+                # Give control back to the main event loop so we can still hit the heartbeat
+                await asyncio.sleep(0)
+
+                if save_to_file:
+                    save_proxies_to_file(good_proxies_filename, bad_proxies_filename, blocked_proxies_filename)
 
     return
 
 
-def get_random_good_proxy() -> str:
-    while True:
-        try:
-            return random.choice(tuple(GOOD_PROXIES))
-        except IndexError:
-            LOGGER.debug("Tried to get a good proxy but there were none.")
-            populate_good_proxies()
-            pass
+async def get_random_good_proxy() -> str:
+        while True:
+            try:
+                return random.choice(tuple(GOOD_PROXIES))
+            except IndexError:
+                LOGGER.debug("Tried to get a good proxy but there were none.")
+
+                # lock the good proxies list so we don't get race conditions
+                # with multiple calls trying to populate the proxy list
+                await populate_good_proxies()
+                pass
 
 
 # Code copied from https://github.com/swar/nba_api/blob/master/tests/stats/deferred_endpoints.py
@@ -194,7 +203,7 @@ def ProxiedEndpoint(endpoint_class, **kwargs):
             kwargs.pop('use_proxy', None)
 
             while True:
-                proxy_url = get_random_good_proxy()
+                proxy_url = asyncio.run(get_random_good_proxy())
 
                 # insert the proxy url into the arguments for the endpoint call
                 kwargs['proxy'] = proxy_url
