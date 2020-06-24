@@ -193,7 +193,7 @@ class DeferredEndpoint:
         return self.endpoint_class(**self.kwargs)
 
 
-def ProxiedEndpoint(endpoint_class, **kwargs):
+async def ProxiedEndpoint(endpoint_class, **kwargs):
     # Modified version of DeferredEndpoint to automatically get the current proxy and use it
 
         if (kwargs.get('use_proxy') is None and not is_direct_connect_allowed()) or \
@@ -203,7 +203,7 @@ def ProxiedEndpoint(endpoint_class, **kwargs):
             kwargs.pop('use_proxy', None)
 
             while True:
-                proxy_url = asyncio.run(get_random_good_proxy())
+                proxy_url = await get_random_good_proxy()
 
                 # insert the proxy url into the arguments for the endpoint call
                 kwargs['proxy'] = proxy_url

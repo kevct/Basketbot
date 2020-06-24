@@ -10,6 +10,7 @@ requests = "*"
 nba-api = "*"
 textdistance = {extras = ["jarowinkler"],version = "*"}
 proxybroker = "*"
+discord-py = "*"
 
 [requires]
 python_version = "3.7"

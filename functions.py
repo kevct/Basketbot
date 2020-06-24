@@ -39,13 +39,13 @@ teamClrs = {
     1610612766: 0x00788C  #Charlotte Hornets
 }
 
-def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_season, use_proxy = None) -> Optional[dict]:
+async def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_season, use_proxy = None) -> Optional[dict]:
     static_info = players.find_player_by_id(player_id)
 
     if static_info is None or len(static_info) < 1:
         return None
 
-    all_seasons = ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict().get('SeasonTotalsRegularSeason')
+    all_seasons = await ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict().get('SeasonTotalsRegularSeason')
 
     target_season = None
 
@@ -59,7 +59,7 @@ def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_sea
 
     else:
     
-        common_info = ProxiedEndpoint(CommonPlayerInfo, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict() \
+        common_info = await ProxiedEndpoint(CommonPlayerInfo, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict() \
             .get('CommonPlayerInfo')[0]
         
         stats_dict = {}
@@ -93,7 +93,7 @@ def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.current_sea
 
         return stats_dict
 
-def getPlayerCareerStatsByID(player_id: int, use_proxy: Optional[bool] = None) -> Optional[dict]:
+async def getPlayerCareerStatsByID(player_id: int, use_proxy: Optional[bool] = None) -> Optional[dict]:
     static_info = players.find_player_by_id(player_id)
 
     if static_info is None or len(static_info) < 1:
@@ -101,9 +101,9 @@ def getPlayerCareerStatsByID(player_id: int, use_proxy: Optional[bool] = None) -
 
     stats_dict = {}
 
-    common_info = ProxiedEndpoint(CommonPlayerInfo, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict() \
+    common_info = await ProxiedEndpoint(CommonPlayerInfo, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict() \
         .get('CommonPlayerInfo')[0]
-    career_stats = ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict() \
+    career_stats = await ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict() \
         .get('CareerTotalsRegularSeason')[0]
 
     stats_dict['FROM_YEAR'] = common_info.get('FROM_YEAR')
@@ -232,7 +232,7 @@ def getTeamLogoURL(team_id: int) -> Optional[str]:
     #Discord does not support .svg file extensions
     #return f"https://www.nba.com/assets/logos/teams/primary/web/{teamThreeLetter}.svg"
 
-def getTeamCareerStatsByID(team_id: int, use_proxy: Optional[bool] = None) -> Optional[Dict[str, Any]]:
+async def getTeamCareerStatsByID(team_id: int, use_proxy: Optional[bool] = None) -> Optional[Dict[str, Any]]:
     static_info = teams.find_team_name_by_id(team_id)
 
     if static_info is None or len(static_info) < 1:
@@ -240,7 +240,7 @@ def getTeamCareerStatsByID(team_id: int, use_proxy: Optional[bool] = None) -> Op
 
     stats_dict = {}
 
-    all_seasons = ProxiedEndpoint(TeamYearByYearStats, team_id = team_id, use_proxy=use_proxy).get_normalized_dict().get('TeamStats')
+    all_seasons = await ProxiedEndpoint(TeamYearByYearStats, team_id = team_id, use_proxy=use_proxy).get_normalized_dict().get('TeamStats')
     stats_dict['W'] = 0
     stats_dict['L'] = 0
     stats_dict['PCT'] = 0
@@ -269,7 +269,7 @@ def getTeamCareerStatsByID(team_id: int, use_proxy: Optional[bool] = None) -> Op
 
     return stats_dict
 
-def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season, use_proxy: Optional[bool] = None) -> Optional[Dict[str, Any]]:
+async def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season, use_proxy: Optional[bool] = None) -> Optional[Dict[str, Any]]:
     static_info = teams.find_team_name_by_id(team_id)
 
     if static_info is None or len(static_info) < 1:
@@ -277,8 +277,8 @@ def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_season,
 
     stats_dict = {}
 
-    season_info = ProxiedEndpoint(TeamInfoCommon, team_id = team_id, season_nullable=season_id, use_proxy=use_proxy).get_normalized_dict().get('TeamInfoCommon')[0]
-    season_stats =  ProxiedEndpoint(TeamInfoCommon(team_id = team_id, season_nullable=season_id)).get_normalized_dict().get('TeamSeasonRanks')[0]
+    season_info = await ProxiedEndpoint(TeamInfoCommon, team_id = team_id, season_nullable=season_id, use_proxy=use_proxy).get_normalized_dict().get('TeamInfoCommon')[0]
+    season_stats =  await ProxiedEndpoint(TeamInfoCommon(team_id = team_id, season_nullable=season_id)).get_normalized_dict().get('TeamSeasonRanks')[0]
     
     stats_dict['TEAM_CONFERENCE'] = season_info.get('TEAM_CONFERENCE')
     stats_dict['CONF_RANK'] = season_info.get('CONF_RANK')
