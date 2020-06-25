@@ -295,8 +295,10 @@ async def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_s
 
     season_info_response = await ProxiedEndpoint(TeamInfoCommon, team_id = team_id, season_nullable=season_id, use_proxy=use_proxy)
 
-    season_info = season_info_response.get_normalized_dict().get('TeamInfoCommon')[0]
-    season_stats = season_info_response.get_normalized_dict().get('TeamSeasonRanks')[0]
+    season_dict = season_info_response.get_normalized_dict()
+
+    season_info = season_dict.get('TeamInfoCommon')[0]
+    season_stats = season_dict.get('TeamSeasonRanks')[0]
 
     stats_dict['TEAM_CONFERENCE'] = season_info.get('TEAM_CONFERENCE')
     stats_dict['CONF_RANK'] = season_info.get('CONF_RANK')
