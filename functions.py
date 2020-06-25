@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional, Dict, Any
 
 from nba_api.stats.static import players, teams
@@ -46,6 +47,8 @@ async def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.curre
         return None
 
     all_seasons_response = await ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy)
+
+    await asyncio.sleep(0)
 
     all_seasons = all_seasons_response.get_normalized_dict().get('SeasonTotalsRegularSeason')
 
@@ -105,6 +108,9 @@ async def getPlayerCareerStatsByID(player_id: int, use_proxy: Optional[bool] = N
     stats_dict = {}
 
     common_info_response = await ProxiedEndpoint(CommonPlayerInfo, player_id=static_info.get('id'), use_proxy=use_proxy)
+
+    await asyncio.sleep(0)
+
     career_stats_response = await ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy)
 
     common_info = common_info_response.get_normalized_dict().get('CommonPlayerInfo')[0]
@@ -288,10 +294,9 @@ async def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_s
     stats_dict = {}
 
     season_info_response = await ProxiedEndpoint(TeamInfoCommon, team_id = team_id, season_nullable=season_id, use_proxy=use_proxy)
-    season_stats_response =  await ProxiedEndpoint(TeamInfoCommon(team_id = team_id, season_nullable=season_id))
 
     season_info = season_info_response.get_normalized_dict().get('TeamInfoCommon')[0]
-    season_stats = season_stats_response.get_normalized_dict().get('TeamSeasonRanks')[0]
+    season_stats = season_info_response.get_normalized_dict().get('TeamSeasonRanks')[0]
 
     stats_dict['TEAM_CONFERENCE'] = season_info.get('TEAM_CONFERENCE')
     stats_dict['CONF_RANK'] = season_info.get('CONF_RANK')
@@ -339,7 +344,7 @@ def getTeamIdsByName(team_name: str, fuzzy_match: bool = False) -> Optional[Dict
             ret_dict[match.get('id')] = match.get('full_name')
 
     if fuzzy_match and len(ret_dict) > 1:
-        return fuzzyids.getFuzzyPlayerIdsByName(stripped_name)
+        return fuzzyids.getFuzzyTeamIdsByName(stripped_name)
     else:
         return ret_dict
 
