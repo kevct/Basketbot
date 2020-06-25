@@ -1,5 +1,8 @@
 import asyncio
+import json
 import random
+from asyncio import FIRST_COMPLETED
+from json import JSONDecodeError
 from time import time
 from typing import Set
 import logging
@@ -60,9 +63,13 @@ def load_proxies_from_file(good_proxies_filename: str = None,
 def save_proxies_to_file(good_proxies_filename: str = None,
                          bad_proxies_filename: str = None,
                          blocked_proxies_filename: str = None):
+
+    LOGGER.debug(f"Saving to {good_proxies_filename}")
+
     with open(good_proxies_filename, 'w') as f:
         for proxy_url in GOOD_PROXIES:
             f.write(proxy_url + '\n')
+
     with open(bad_proxies_filename, 'w') as f:
         for proxy_url in BAD_PROXIES:
             f.write(proxy_url + '\n')
@@ -71,14 +78,12 @@ def save_proxies_to_file(good_proxies_filename: str = None,
             f.write(proxy_url + '\n')
 
 
-async def process_grabbed_proxies(grabbed_proxies: asyncio.Queue, proxies_to_test: Set[str], min_proxies=10, timeout=5):
+async def process_grabbed_proxies(grabbed_proxies: asyncio.Queue, proxies_to_test: Set[str], min_proxies=10):
+
     while len(proxies_to_test) < min_proxies:
 
-        try:
-            proxy = await asyncio.wait_for(grabbed_proxies.get(), timeout=timeout)
-        except asyncio.TimeoutError:
-            LOGGER.debug("ProxyBroker queue timing out")
-            break
+        LOGGER.debug("Waiting for proxies to enter queue")
+        proxy = await grabbed_proxies.get()
 
         if proxy is not None:
             proxy_url = f"{proxy.host}:{proxy.port}"
@@ -106,17 +111,17 @@ async def populate_good_proxies(good_proxies_filename: str = GOOD_PROXIES_FILE,
 
     proxies_to_test = set()
     grabbed_proxies = asyncio.Queue()
-    broker = Broker(grabbed_proxies, timeout=broker_timeout)
+    broker = Broker(grabbed_proxies)
+
+    broker_task = asyncio.create_task(broker.find(types=['HTTPS']))
 
     while len(GOOD_PROXIES) < min_good_proxies:
         proxy_processor = process_grabbed_proxies(grabbed_proxies, proxies_to_test,
                                                        min_proxies=proxy_test_batch_size)
-        tasks = await asyncio.gather(broker.grab(countries=['US']),
-                               proxy_processor)
 
         try:
             LOGGER.debug("Starting proxy finding async loop")
-            await proxy_processor
+            await asyncio.gather(broker_task, asyncio.create_task(proxy_processor))
         except OSError:
             LOGGER.debug("ProxyBroker OSError caught")
             # Needed due to bug in ProxyBroker (https://github.com/constverum/ProxyBroker/issues/130)
@@ -125,6 +130,8 @@ async def populate_good_proxies(good_proxies_filename: str = GOOD_PROXIES_FILE,
             LOGGER.debug("ProxyBroker RuntimeError caught")
             # Needed due to bug in ProxyBroker (https://github.com/constverum/ProxyBroker/issues/25)
             pass
+
+        await asyncio.sleep(0)
 
         # If ProxyBroker runs out of URLs, reset it and empty the bad proxies list
         # Bad proxies just failed when they originally were tested, so they might work now
@@ -144,6 +151,7 @@ async def populate_good_proxies(good_proxies_filename: str = GOOD_PROXIES_FILE,
                     start = time()
                     CommonPlayerInfo(player_id=player_id_to_test, proxy=proxy_url, timeout=5).get_normalized_dict()
                     end = time()
+
                     LOGGER.debug(f"proxy connection from {proxy_url} succeeded in {round(end - start, 4)} seconds")
                     GOOD_PROXIES.add(proxy_url)
 
@@ -157,14 +165,26 @@ async def populate_good_proxies(good_proxies_filename: str = GOOD_PROXIES_FILE,
                     LOGGER.debug(f"proxy connection from {proxy_url} failed with error {e}")
                     BAD_PROXIES.add(proxy_url)
 
+                except JSONDecodeError as e:
+                    # The NBA sometimes responds if the IP is blocked, but just
+                    # sends an empty JSON response. If that happens, add it to
+                    # the blocked list
+                    LOGGER.debug(f"stats.nba.com returned an empty JSON response (blocked)")
+                    BLOCKED_PROXIES.add(proxy_url)
+
                 # Give control back to the main event loop so we can still hit the heartbeat
+                LOGGER.debug("Giving control back to main loop")
                 await asyncio.sleep(0)
 
                 if save_to_file:
+                    LOGGER.debug("Saving to file")
                     save_proxies_to_file(good_proxies_filename, bad_proxies_filename, blocked_proxies_filename)
 
-    return
+    broker_task.cancel()
 
+    LOGGER.debug(f"Now have {len(GOOD_PROXIES)} good proxies")
+
+    return
 
 async def get_random_good_proxy() -> str:
         while True:
@@ -210,9 +230,10 @@ async def ProxiedEndpoint(endpoint_class, **kwargs):
                     # try to access the endpoint
                     return endpoint_class(**kwargs)
 
-                except (ReadTimeout, ProxyError, ConnectTimeout, SSLError, ConnectionError) as e:
+                except (ReadTimeout, ProxyError, ConnectTimeout, SSLError, ConnectionError, JSONDecodeError) as e:
                     LOGGER.debug(f"Previously good proxy {proxy_url} failed with error {e}")
                     GOOD_PROXIES.remove(proxy_url)
+
 
         else:
             LOGGER.debug("Directly calling endpoint")
