@@ -27,7 +27,7 @@ async def playercareerstats(ctx, *args):
 
     embed = discord.Embed(title="Player Not Found",
                           description="Double check that the player name is spelled correctly.", color=0x595959)
-    players = await nba.getPlayerIdsByName(name.strip(), False, True)
+    players = nba.getPlayerIdsByName(name.strip(), False, True)
     if players is not None:  # If the list of players is not empty
         playerIds = list(players.keys())
         playerNames = list(players.values())
@@ -67,7 +67,7 @@ async def player(ctx, *args):
     embed = discord.Embed(title="Player Not Found",
                           description="Double check that the player name is spelled correctly, or try using %playercareerstats [player].",
                           color=0x595959)
-    players = await nba.getPlayerIdsByName(name.strip(), True, True)
+    players = nba.getPlayerIdsByName(name.strip(), True, True)
     if players is not None:  # If the list of players is not empty
         playerIds = list(players.keys())
         playerNames = list(players.values())
@@ -115,7 +115,7 @@ async def team(ctx, *args):
 
     embed = discord.Embed(title="Team Not Found", description="Double check that the team name is spelled correctly.",
                           color=0x595959)
-    teams = await nba.getTeamIdsByName(name.strip())
+    teams = nba.getTeamIdsByName(name.strip())
     if teams is not None:
         teamIds = list(teams.keys())
         teamNames = list(teams.values())
