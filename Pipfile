@@ -9,8 +9,9 @@ verify_ssl = true
 requests = "*"
 nba-api = "*"
 textdistance = {extras = ["jarowinkler"],version = "*"}
-proxybroker = "*"
+proxybroker = {git = "https://github.com/bluet/proxybroker2.git",ref = "master"}
 discord-py = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.7"
