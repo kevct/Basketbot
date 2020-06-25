@@ -1,10 +1,10 @@
+import asyncio
 from typing import Optional, Dict, Any
 
 from nba_api.stats.static import players, teams
 from nba_api.stats.endpoints import PlayerCareerStats, TeamInfoCommon, CommonPlayerInfo, TeamYearByYearStats
 from nba_api.stats.library.parameters import Season
 from proxied_endpoint import ProxiedEndpoint
-import asyncio
 import fuzzyids
 
 teamClrs = {
@@ -48,10 +48,10 @@ async def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.curre
 
     all_seasons_response = await ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy)
 
-    await asyncio.sleep(0)
-
     all_seasons = all_seasons_response.get_normalized_dict().get('SeasonTotalsRegularSeason')
     all_seasons_response = await ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy)
+
+    await asyncio.sleep(0)
 
     all_seasons = all_seasons_response.get_normalized_dict().get('SeasonTotalsRegularSeason')
 
@@ -66,10 +66,11 @@ async def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.curre
         return None
 
     else:
-    
-        common_info = await ProxiedEndpoint(CommonPlayerInfo, player_id=static_info.get('id'), use_proxy=use_proxy).get_normalized_dict() \
-            .get('CommonPlayerInfo')[0]
-        
+
+        common_info_response = await ProxiedEndpoint(CommonPlayerInfo, player_id=static_info.get('id'), use_proxy=use_proxy)
+
+        common_info = common_info_response.get_normalized_dict().get('CommonPlayerInfo')[0]
+
         stats_dict = {}
 
         stats_dict['FROM_YEAR'] = common_info.get('FROM_YEAR')
@@ -81,7 +82,7 @@ async def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.curre
         stats_dict['POSITION'] = common_info.get('POSITION')
         stats_dict['HEIGHT'] = common_info.get('HEIGHT')
         stats_dict['WEIGHT'] = common_info.get('WEIGHT')
-        
+
         stats_dict['SEASON_ID'] = target_season.get('SEASON_ID')
         stats_dict['GP'] = target_season.get('GP')
         stats_dict['GS'] = target_season.get('GS')
@@ -110,7 +111,6 @@ async def getPlayerCareerStatsByID(player_id: int, use_proxy: Optional[bool] = N
     stats_dict = {}
 
     common_info_response = await ProxiedEndpoint(CommonPlayerInfo, player_id=static_info.get('id'), use_proxy=use_proxy)
-
     career_stats_response = await ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy)
 
     common_info = common_info_response.get_normalized_dict().get('CommonPlayerInfo')[0]
@@ -135,6 +135,9 @@ async def getPlayerCareerStatsByID(player_id: int, use_proxy: Optional[bool] = N
     stats_dict['REB'] = career_stats.get('REB')
     stats_dict['OREB'] = career_stats.get('OREB')
     stats_dict['DREB'] = career_stats.get('DREB')
+    stats_dict['DRAFT_YEAR'] = common_info.get('DRAFT_YEAR')
+    stats_dict['DRAFT_ROUND'] = common_info.get('DRAFT_ROUND')
+    stats_dict['DRAFT_NUMBER'] = common_info.get('DRAFT_NUMBER')
 
     return stats_dict
 
@@ -155,7 +158,7 @@ async def getPlayerCareerString(player_id: int) -> Optional[str]:
 
     # get the rest of the data from the NBA api endpoint
     # might want to change this to DataFrame if we need it for graphing later
-    all_info = getPlayerCareerStatsByID(player_id)
+    all_info = await getPlayerCareerStatsByID(player_id)
 
     ret_str += f" ({all_info.get('FROM_YEAR')}-{all_info.get('TO_YEAR')})"
 
@@ -233,13 +236,13 @@ def getPlayerHeadshotURL(player_id: int) -> Optional[str]:
         return None
 
     return f"https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/{str(player_id)}.png"
-    
+
 def getTeamLogoURL(team_id: int) -> Optional[str]:
     static_info = teams.find_team_name_by_id(team_id)
 
     if static_info is None or len(static_info) < 1:
         return None
-    
+
     teamThreeLetter = (TeamInfoCommon(team_id = team_id, season_nullable=Season.current_season).get_normalized_dict().get('TeamInfoCommon')[0]).get("TEAM_ABBREVIATION").lower()
     return f"https://a.espncdn.com/i/teamlogos/nba/500/{teamThreeLetter}.png"
     #Discord does not support .svg file extensions
@@ -253,7 +256,10 @@ async def getTeamCareerStatsByID(team_id: int, use_proxy: Optional[bool] = None)
 
     stats_dict = {}
 
-    all_seasons = await ProxiedEndpoint(TeamYearByYearStats, team_id = team_id, use_proxy=use_proxy).get_normalized_dict().get('TeamStats')
+    all_seasons_response = await ProxiedEndpoint(TeamYearByYearStats, team_id = team_id, use_proxy=use_proxy)
+
+    all_seasons = all_seasons_response.get_normalized_dict().get('TeamStats')
+
     stats_dict['W'] = 0
     stats_dict['L'] = 0
     stats_dict['PCT'] = 0
@@ -343,7 +349,7 @@ def getTeamIdsByName(team_name: str, fuzzy_match: bool = False) -> Optional[Dict
             ret_dict[match.get('id')] = match.get('full_name')
 
     if fuzzy_match and len(ret_dict) > 1:
-        return fuzzyids.getFuzzyPlayerIdsByName(stripped_name)
+        return fuzzyids.getFuzzyTeamIdsByName(stripped_name)
     else:
         return ret_dict
 
