@@ -49,11 +49,7 @@ async def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.curre
     all_seasons_response = await ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy)
 
     all_seasons = all_seasons_response.get_normalized_dict().get('SeasonTotalsRegularSeason')
-    all_seasons_response = await ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy)
-
     await asyncio.sleep(0)
-
-    all_seasons = all_seasons_response.get_normalized_dict().get('SeasonTotalsRegularSeason')
 
     target_season = None
 
@@ -70,6 +66,7 @@ async def getPlayerSeasonStatsByID(player_id: int, season_id: str = Season.curre
         common_info_response = await ProxiedEndpoint(CommonPlayerInfo, player_id=static_info.get('id'), use_proxy=use_proxy)
 
         common_info = common_info_response.get_normalized_dict().get('CommonPlayerInfo')[0]
+        await asyncio.sleep(0)
 
         stats_dict = {}
 
@@ -114,10 +111,10 @@ async def getPlayerCareerStatsByID(player_id: int, use_proxy: Optional[bool] = N
     career_stats_response = await ProxiedEndpoint(PlayerCareerStats, player_id=static_info.get('id'), use_proxy=use_proxy)
 
     common_info = common_info_response.get_normalized_dict().get('CommonPlayerInfo')[0]
-
     await asyncio.sleep(0)
 
     career_stats = career_stats_response.get_normalized_dict().get('CareerTotalsRegularSeason')[0]
+    await asyncio.sleep(0)
 
     stats_dict['FROM_YEAR'] = common_info.get('FROM_YEAR')
     stats_dict['TO_YEAR'] = common_info.get('TO_YEAR')
@@ -259,6 +256,7 @@ async def getTeamCareerStatsByID(team_id: int, use_proxy: Optional[bool] = None)
     all_seasons_response = await ProxiedEndpoint(TeamYearByYearStats, team_id = team_id, use_proxy=use_proxy)
 
     all_seasons = all_seasons_response.get_normalized_dict().get('TeamStats')
+    await asyncio.sleep(0)
 
     stats_dict['W'] = 0
     stats_dict['L'] = 0
@@ -299,6 +297,7 @@ async def getTeamSeasonStatsByID(team_id: int, season_id: str = Season.current_s
     season_info_response = await ProxiedEndpoint(TeamInfoCommon, team_id = team_id, season_nullable=season_id, use_proxy=use_proxy)
 
     season_dict = season_info_response.get_normalized_dict()
+    await asyncio.sleep(0)
 
     season_info = season_dict.get('TeamInfoCommon')[0]
     season_stats = season_dict.get('TeamSeasonRanks')[0]
